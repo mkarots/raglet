@@ -1,7 +1,7 @@
 """Configuration classes."""
 
 from dataclasses import dataclass, field
-from typing import Any, Dict
+from typing import Any
 
 
 @dataclass
@@ -14,7 +14,7 @@ class ChunkingConfig:
 
     def validate(self) -> None:
         """Validate chunking configuration.
-        
+
         Raises:
             ValueError: If configuration is invalid
         """
@@ -34,11 +34,11 @@ class TinyRAGConfig:
     """Main configuration class."""
 
     chunking: ChunkingConfig = field(default_factory=ChunkingConfig)
-    custom_metadata: Dict[str, Any] = field(default_factory=dict)
+    custom_metadata: dict[str, Any] = field(default_factory=dict)
 
     def validate(self) -> None:
         """Validate entire configuration.
-        
+
         Raises:
             ValueError: If configuration is invalid
         """

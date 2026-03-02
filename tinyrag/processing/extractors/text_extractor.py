@@ -11,7 +11,7 @@ class TextExtractor(DocumentExtractor):
 
     def __init__(self, encoding: str = "utf-8"):
         """Initialize text extractor.
-        
+
         Args:
             encoding: File encoding (default: utf-8)
         """
@@ -24,13 +24,13 @@ class TextExtractor(DocumentExtractor):
 
     def extract(self, file_path: str) -> str:
         """Extract text from .txt file.
-        
+
         Args:
             file_path: Path to text file
-            
+
         Returns:
             File contents as string
-            
+
         Raises:
             FileNotFoundError: If file doesn't exist
             UnicodeDecodeError: If file encoding is invalid

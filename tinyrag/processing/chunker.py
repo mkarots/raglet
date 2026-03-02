@@ -1,7 +1,7 @@
 """Text chunker implementation."""
 
 import re
-from typing import Any, Dict, List
+from typing import Any
 
 from tinyrag.config.config import ChunkingConfig
 from tinyrag.core.chunk import Chunk
@@ -13,19 +13,19 @@ class SentenceAwareChunker(Chunker):
 
     def __init__(self, config: ChunkingConfig):
         """Initialize chunker.
-        
+
         Args:
             config: Chunking configuration
         """
         self.config = config
 
-    def chunk(self, text: str, metadata: Dict[str, Any]) -> List[Chunk]:
+    def chunk(self, text: str, metadata: dict[str, Any]) -> list[Chunk]:
         """Split text into chunks using sentence-aware strategy.
-        
+
         Args:
             text: Text to chunk
             metadata: Metadata to attach to chunks
-            
+
         Returns:
             List of Chunk objects
         """
@@ -82,12 +82,12 @@ class SentenceAwareChunker(Chunker):
 
         return chunks
 
-    def _split_sentences(self, text: str) -> List[str]:
+    def _split_sentences(self, text: str) -> list[str]:
         """Split text into sentences.
-        
+
         Args:
             text: Text to split
-            
+
         Returns:
             List of sentences
         """

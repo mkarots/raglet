@@ -1,7 +1,7 @@
 """Chunk domain model."""
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -11,10 +11,10 @@ class Chunk:
     text: str
     source: str
     index: int
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     score: Optional[float] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert chunk to dictionary."""
         return {
             "text": self.text,
@@ -25,7 +25,7 @@ class Chunk:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Chunk":
+    def from_dict(cls, data: dict[str, Any]) -> "Chunk":
         """Create chunk from dictionary."""
         return cls(
             text=data["text"],

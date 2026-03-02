@@ -11,7 +11,7 @@ class MarkdownExtractor(DocumentExtractor):
 
     def __init__(self, encoding: str = "utf-8"):
         """Initialize markdown extractor.
-        
+
         Args:
             encoding: File encoding (default: utf-8)
         """
@@ -24,13 +24,13 @@ class MarkdownExtractor(DocumentExtractor):
 
     def extract(self, file_path: str) -> str:
         """Extract text from markdown file.
-        
+
         Args:
             file_path: Path to markdown file
-            
+
         Returns:
             File contents as string (raw markdown)
-            
+
         Raises:
             FileNotFoundError: If file doesn't exist
             UnicodeDecodeError: If file encoding is invalid

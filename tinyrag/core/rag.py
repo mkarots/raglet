@@ -1,6 +1,6 @@
 """TinyRAG main class."""
 
-from typing import List, Optional
+from typing import Optional
 
 from tinyrag.config.config import TinyRAGConfig
 from tinyrag.core.chunk import Chunk
@@ -12,11 +12,11 @@ class TinyRAG:
 
     def __init__(
         self,
-        chunks: List[Chunk],
+        chunks: list[Chunk],
         config: TinyRAGConfig
     ):
         """Initialize TinyRAG.
-        
+
         Args:
             chunks: List of chunks
             config: Configuration
@@ -27,19 +27,19 @@ class TinyRAG:
     @classmethod
     def from_files(
         cls,
-        files: List[str],
+        files: list[str],
         document_extractor: Optional[DocumentExtractor] = None,
         chunker: Optional[Chunker] = None,
         config: Optional[TinyRAGConfig] = None,
     ) -> "TinyRAG":
         """Create TinyRAG from files.
-        
+
         Args:
             files: List of file paths
             document_extractor: Optional document extractor (uses factory if None)
             chunker: Optional chunker (creates default if None)
             config: Optional configuration (uses defaults if None)
-            
+
         Returns:
             TinyRAG instance
         """
@@ -73,9 +73,9 @@ class TinyRAG:
 
         return cls(chunks=all_chunks, config=config)
 
-    def get_all_chunks(self) -> List[Chunk]:
+    def get_all_chunks(self) -> list[Chunk]:
         """Get all chunks.
-        
+
         Returns:
             List of all chunks
         """
