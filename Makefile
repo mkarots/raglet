@@ -1,17 +1,16 @@
-.PHONY: help install install-dev test test-unit test-integration test-e2e lint format type-check coverage clean build dist ci
-
-# Detect uv command
-UV := $(shell command -v uv 2>/dev/null || echo "")
+.PHONY: help install install-dev test test-unit test-integration test-e2e lint format format-check type-check coverage coverage-ci clean build dist ci venv check-uv
 
 
-venv:
-	uv venv
-
-activate: venv
-	. ./.venv/bin/activate
+# Check if uv is available (checks at runtime, works even if uv was installed after Makefile was parsed)
+check-uv:
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "Error: uv not found. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"; \
+		exit 1; \
+	fi
 
 help:
 	@echo "Available targets:"
+	@echo "  venv            - Create virtual environment (.venv)"
 	@echo "  install          - Install package and dependencies"
 	@echo "  install-dev     - Install package with dev dependencies"
 	@echo "  test            - Run all tests"
@@ -20,52 +19,79 @@ help:
 	@echo "  test-e2e        - Run end-to-end tests only"
 	@echo "  lint            - Run linters (ruff)"
 	@echo "  format          - Format code (black)"
+	@echo "  format-check    - Check formatting without modifying"
 	@echo "  type-check      - Run type checker (mypy)"
 	@echo "  coverage        - Generate coverage report"
+	@echo "  coverage-ci     - Generate coverage report for CI"
 	@echo "  clean           - Clean build artifacts"
 	@echo "  build           - Build package"
 	@echo "  dist            - Create distribution"
 	@echo "  ci              - Run full CI pipeline"
 	@echo ""
-	@if [ -z "$(UV)" ]; then \
-		echo "⚠️  uv not found. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"; \
+	@if command -v uv >/dev/null 2>&1; then \
+		echo "Using uv: $$(command -v uv)"; \
 	else \
-		echo "Using uv: $(UV)"; \
+		echo "⚠️  uv not found. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"; \
 	fi
 
-install:
-	make activate
-	$(UV) pip install -e .
+# Create virtual environment if it doesn't exist
+# uv run automatically uses .venv if it exists, or creates one if needed
+venv: check-uv
+	@if [ ! -d .venv ]; then \
+		echo "Creating virtual environment..."; \
+		uv venv; \
+	else \
+		echo "Virtual environment already exists at .venv"; \
+	fi
 
-install-dev:
-	make activate
-	$(UV) pip install -e ".[dev,all]"
+# Install package (production dependencies only)
+# uv pip install will use .venv if it exists, or create one automatically
+install: venv check-uv
+	uv pip install -e .
 
-test:
-	$(UV) run pytest
+# Install package with dev dependencies
+# uv pip install will use .venv if it exists, or create one automatically
+install-dev: venv check-uv
+	uv pip install -e ".[dev,all]"
 
-test-unit:
-	$(UV) run pytest -m unit
+# All commands below use 'uv run' which automatically:
+# - Uses .venv if it exists
+# - Creates .venv if it doesn't exist
+# - Installs dependencies on first run
+# No manual venv activation needed!
 
-test-integration:
-	$(UV) run pytest -m integration
+test: check-uv
+	uv run pytest
 
-test-e2e:
-	$(UV) run pytest -m e2e
+test-unit: check-uv
+	uv run pytest -m unit
 
-lint:
-	$(UV) run ruff check tinyrag tests
+test-integration: check-uv
+	uv run pytest -m integration
 
-format:
-	$(UV) run black tinyrag tests
-	$(UV) run ruff check --fix tinyrag tests
+test-e2e: check-uv
+	uv run pytest -m e2e
 
-type-check:
-	$(UV) run mypy tinyrag
+lint: check-uv
+	uv run ruff check tinyrag tests
 
-coverage:
-	$(UV) run pytest --cov=tinyrag --cov-report=html --cov-report=term-missing
+format: check-uv
+	uv run black tinyrag tests
+	uv run ruff check --fix tinyrag tests
+
+format-check: check-uv
+	uv run black --check tinyrag tests
+	uv run ruff check tinyrag tests
+
+type-check: check-uv
+	uv run mypy tinyrag
+
+coverage: check-uv
+	uv run pytest --cov=tinyrag --cov-report=html --cov-report=term-missing
 	@echo "Coverage report generated in htmlcov/index.html"
+
+coverage-ci: check-uv
+	uv run pytest --cov=tinyrag --cov-report=xml --cov-report=term-missing
 
 clean:
 	rm -rf build/
@@ -80,8 +106,8 @@ clean:
 	find . -type d -name __pycache__ -exec rm -r {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 
-build: clean
-	$(UV) build
+build: clean check-uv
+	uv build
 
 dist: build
 	@echo "Distribution created in dist/"

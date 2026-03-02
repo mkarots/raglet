@@ -36,32 +36,19 @@ jobs:
           ${{ runner.os }}-uv-
     
     - name: Install dependencies
-      run: |
-        uv pip install -e ".[dev,all]"
+      run: make install-dev
     
     - name: Lint
       run: make lint
     
     - name: Format check
-      run: |
-        uv run black --check tinyrag tests
-        uv run ruff check tinyrag tests
+      run: make format-check
     
     - name: Type check
       run: make type-check
     
-    - name: Run unit tests
-      run: make test-unit
-    
-    - name: Run integration tests
-      run: make test-integration
-    
-    - name: Run E2E tests
-      run: make test-e2e
-    
-    - name: Generate coverage
-      run: |
-        uv run pytest --cov=tinyrag --cov-report=xml --cov-report=term-missing
+    - name: Run tests with coverage
+      run: make coverage-ci
     
     - name: Upload coverage
       uses: codecov/codecov-action@v3
