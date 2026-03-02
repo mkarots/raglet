@@ -23,10 +23,12 @@ class TestE2EBasic:
             # Create multiple test files
             for i in range(3):
                 file_path = os.path.join(test_dir, f"doc_{i}.txt")
-                with open(file_path, 'w') as f:
-                    f.write(f"Document {i}. This is test content with multiple sentences. "
-                           f"Each document has different content. "
-                           f"Testing the full pipeline from files to chunks.")
+                with open(file_path, "w") as f:
+                    f.write(
+                        f"Document {i}. This is test content with multiple sentences. "
+                        f"Each document has different content. "
+                        f"Testing the full pipeline from files to chunks."
+                    )
                 files.append(file_path)
 
             # Create TinyRAG
@@ -60,13 +62,11 @@ class TestE2EBasic:
         file_path = os.path.join(test_dir, "test.txt")
 
         try:
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write("This is a longer document. " * 50)  # Create longer content
 
             # Create with custom config
-            config = TinyRAGConfig(
-                chunking=ChunkingConfig(size=100, overlap=10)
-            )
+            config = TinyRAGConfig(chunking=ChunkingConfig(size=100, overlap=10))
 
             rag = TinyRAG.from_files([file_path], config=config)
 
@@ -84,7 +84,7 @@ class TestE2EBasic:
 
     def test_e2e_get_all_chunks(self):
         """E2E test: Get all chunks from TinyRAG."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("Test document with content.")
             temp_path = f.name
 
@@ -110,13 +110,13 @@ class TestE2EBasic:
         try:
             # Create .txt file
             txt_file = os.path.join(test_dir, "doc.txt")
-            with open(txt_file, 'w') as f:
+            with open(txt_file, "w") as f:
                 f.write("Text file content.")
             files.append(txt_file)
 
             # Create .md file
             md_file = os.path.join(test_dir, "doc.md")
-            with open(md_file, 'w') as f:
+            with open(md_file, "w") as f:
                 f.write("# Markdown\n\nMarkdown file content.")
             files.append(md_file)
 

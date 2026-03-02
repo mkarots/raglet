@@ -41,7 +41,7 @@ class TestExtractorFactory:
 
     def test_factory_extracts_correctly(self):
         """Test factory-created extractor works correctly."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("Test content")
             temp_path = f.name
 

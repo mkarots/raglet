@@ -31,6 +31,7 @@ class ChunkingConfig:
 @dataclass
 class TinyRAGConfig:
     """Main configuration class."""
+
     """Main configuration class."""
 
     chunking: ChunkingConfig = field(default_factory=ChunkingConfig)

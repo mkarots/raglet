@@ -50,12 +50,14 @@ class SentenceAwareChunker(Chunker):
             # If adding this sentence would exceed size, finalize current chunk
             if current_chunk and current_size + sentence_size > target_chars:
                 chunk_text = " ".join(current_chunk)
-                chunks.append(Chunk(
-                    text=chunk_text,
-                    source=metadata.get("source", ""),
-                    index=chunk_index,
-                    metadata=metadata.copy()
-                ))
+                chunks.append(
+                    Chunk(
+                        text=chunk_text,
+                        source=metadata.get("source", ""),
+                        index=chunk_index,
+                        metadata=metadata.copy(),
+                    )
+                )
                 chunk_index += 1
 
                 # Start new chunk with overlap
@@ -73,12 +75,14 @@ class SentenceAwareChunker(Chunker):
         # Add final chunk
         if current_chunk:
             chunk_text = " ".join(current_chunk)
-            chunks.append(Chunk(
-                text=chunk_text,
-                source=metadata.get("source", ""),
-                index=chunk_index,
-                metadata=metadata.copy()
-            ))
+            chunks.append(
+                Chunk(
+                    text=chunk_text,
+                    source=metadata.get("source", ""),
+                    index=chunk_index,
+                    metadata=metadata.copy(),
+                )
+            )
 
         return chunks
 
@@ -93,7 +97,7 @@ class SentenceAwareChunker(Chunker):
         """
         # Simple sentence splitting (can be improved)
         # Split on sentence endings followed by space or newline
-        pattern = r'(?<=[.!?])\s+'
+        pattern = r"(?<=[.!?])\s+"
         sentences = re.split(pattern, text)
 
         # Filter empty sentences

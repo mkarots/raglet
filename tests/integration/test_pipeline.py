@@ -16,8 +16,10 @@ class TestExtractChunkFlow:
     def test_from_files_txt(self):
         """Test creating TinyRAG from text files."""
         # Create temporary text file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
-            f.write("This is a test document. It has multiple sentences. Each sentence is important.")
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write(
+                "This is a test document. It has multiple sentences. Each sentence is important."
+            )
             temp_path = f.name
 
         try:
@@ -32,7 +34,7 @@ class TestExtractChunkFlow:
     def test_from_files_markdown(self):
         """Test creating TinyRAG from markdown files."""
         # Create temporary markdown file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("# Title\n\nThis is a markdown document. It has **formatting**.")
             temp_path = f.name
 
@@ -51,7 +53,7 @@ class TestExtractChunkFlow:
         try:
             # Create multiple temp files
             for i in range(3):
-                f = tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False)
+                f = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)
                 f.write(f"Document {i}. This is test content.")
                 f.close()
                 files.append(f.name)
@@ -70,7 +72,7 @@ class TestExtractChunkFlow:
         """Test creating TinyRAG with custom config."""
         config = TinyRAGConfig(chunking=ChunkingConfig(size=100, overlap=10))
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("Short document.")
             temp_path = f.name
 
@@ -84,7 +86,7 @@ class TestExtractChunkFlow:
 
     def test_get_all_chunks(self):
         """Test getting all chunks."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("Test content.")
             temp_path = f.name
 

@@ -10,11 +10,7 @@ from tinyrag.processing.interfaces import Chunker, DocumentExtractor
 class TinyRAG:
     """Main RAG orchestrator class."""
 
-    def __init__(
-        self,
-        chunks: list[Chunk],
-        config: TinyRAGConfig
-    ):
+    def __init__(self, chunks: list[Chunk], config: TinyRAGConfig):
         """Initialize TinyRAG.
 
         Args:

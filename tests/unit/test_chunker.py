@@ -1,6 +1,5 @@
 """Unit tests for chunker."""
 
-
 from tinyrag.config.config import ChunkingConfig
 from tinyrag.processing.chunker import SentenceAwareChunker
 

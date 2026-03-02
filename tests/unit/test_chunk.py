@@ -1,6 +1,5 @@
 """Unit tests for Chunk model."""
 
-
 from tinyrag.core.chunk import Chunk
 
 
@@ -9,12 +8,7 @@ class TestChunk:
 
     def test_create_chunk(self):
         """Test creating a chunk."""
-        chunk = Chunk(
-            text="Test text",
-            source="test.txt",
-            index=0,
-            metadata={"key": "value"}
-        )
+        chunk = Chunk(text="Test text", source="test.txt", index=0, metadata={"key": "value"})
 
         assert chunk.text == "Test text"
         assert chunk.source == "test.txt"
@@ -25,11 +19,7 @@ class TestChunk:
     def test_chunk_to_dict(self):
         """Test converting chunk to dictionary."""
         chunk = Chunk(
-            text="Test text",
-            source="test.txt",
-            index=0,
-            metadata={"key": "value"},
-            score=0.95
+            text="Test text", source="test.txt", index=0, metadata={"key": "value"}, score=0.95
         )
 
         result = chunk.to_dict()
@@ -47,7 +37,7 @@ class TestChunk:
             "source": "test.txt",
             "index": 0,
             "metadata": {"key": "value"},
-            "score": 0.95
+            "score": 0.95,
         }
 
         chunk = Chunk.from_dict(data)
@@ -60,11 +50,7 @@ class TestChunk:
 
     def test_chunk_default_metadata(self):
         """Test chunk with default metadata."""
-        chunk = Chunk(
-            text="Test",
-            source="test.txt",
-            index=0
-        )
+        chunk = Chunk(text="Test", source="test.txt", index=0)
 
         assert chunk.metadata == {}
         assert chunk.score is None

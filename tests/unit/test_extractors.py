@@ -31,7 +31,7 @@ class TestTextExtractor:
         """Test extracting text from file."""
         extractor = TextExtractor()
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("Hello, world!\nThis is a test.")
             temp_path = f.name
 
@@ -72,7 +72,7 @@ class TestMarkdownExtractor:
         """Test extracting text from markdown file."""
         extractor = MarkdownExtractor()
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("# Title\n\nThis is **bold** text.")
             temp_path = f.name
 
