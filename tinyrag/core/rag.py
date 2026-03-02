@@ -60,7 +60,7 @@ class TinyRAG:
             text = extractor.extract(file_path)
 
             if chunker is None:
-                chunker_instance = SentenceAwareChunker(config.chunking)
+                chunker_instance: Chunker = SentenceAwareChunker(config.chunking)
             else:
                 chunker_instance = chunker
 

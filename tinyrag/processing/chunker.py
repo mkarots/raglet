@@ -40,7 +40,7 @@ class SentenceAwareChunker(Chunker):
         sentences = self._split_sentences(text)
 
         chunks = []
-        current_chunk = []
+        current_chunk: list[str] = []
         current_size = 0
         chunk_index = 0
 

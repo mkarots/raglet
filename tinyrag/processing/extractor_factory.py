@@ -1,11 +1,13 @@
 """Factory for document extractors."""
 
+from typing import Optional
+
 from tinyrag.processing.extractors import MarkdownExtractor, TextExtractor
 from tinyrag.processing.interfaces import DocumentExtractor
 
 
 def create_extractor(
-    file_path: str, extractors: list[DocumentExtractor] = None
+    file_path: str, extractors: Optional[list[DocumentExtractor]] = None
 ) -> DocumentExtractor:
     """Create appropriate extractor for file.
 
