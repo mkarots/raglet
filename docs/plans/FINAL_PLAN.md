@@ -887,7 +887,7 @@ tinyrag/
 1. **No external services** - Everything must work offline
 2. **CPU-friendly** - Must work without GPU
 3. **Portable files** - Single file, no dependencies
-4. **Python 3.8+** - Support modern Python versions
+4. **Python 3.9+** - Support modern Python versions
 5. **Open format** - Files must be decodable without library
 
 ### Soft Constraints

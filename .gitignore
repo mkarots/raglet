@@ -26,6 +26,10 @@ ENV/
 env/
 .venv
 
+# uv
+.uv/
+uv.lock
+
 # Testing
 .pytest_cache/
 .coverage

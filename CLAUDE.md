@@ -81,7 +81,7 @@ tinyrag/
 
 ### Python Style
 
-- **Python 3.8+** compatibility required
+- **Python 3.9+** compatibility required
 - **Type hints** - Use type hints for all function signatures
 - **Docstrings** - Google-style docstrings for all public methods
 - **Line length** - 100 characters (configured in pyproject.toml)
@@ -559,7 +559,7 @@ def extract(self, file_path: str) -> str:
 All code must work with:
 
 ```bash
-make install-dev     # Install with dev dependencies (uses python3 -m pip)
+make install-dev     # Install with dev dependencies (uses uv)
 make lint           # Run linters (must pass)
 make format         # Format code (must pass)
 make type-check     # Type checking (should pass)
@@ -570,13 +570,13 @@ make test-e2e       # E2E tests
 make ci             # Full CI pipeline
 ```
 
-**Note:** The Makefile auto-detects Python (`python3` or `python`) and uses `python -m pip` for reliability. Run `make help` to see which Python/pip is being used.
+**Note:** The project uses [uv](https://github.com/astral-sh/uv) for fast package management. Install with: `curl -LsSf https://astral.sh/uv/install.sh | sh`. The Makefile uses `uv` for all package operations. Run `make help` to verify uv is detected.
 
 ### GitHub Actions
 
 - Runs on push/PR to main/develop
 - Tests on multiple OS (Ubuntu, macOS, Windows)
-- Tests on Python 3.8-3.12
+- Tests on Python 3.9-3.12
 - Runs linting, formatting, type checking
 - Generates coverage reports
 

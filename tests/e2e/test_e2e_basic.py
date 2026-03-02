@@ -7,6 +7,7 @@ from pathlib import Path
 
 from tinyrag.core.rag import TinyRAG
 from tinyrag.config.config import TinyRAGConfig
+from tinyrag.config.config import ChunkingConfig
 
 
 @pytest.mark.e2e

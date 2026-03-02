@@ -1,8 +1,14 @@
 .PHONY: help install install-dev test test-unit test-integration test-e2e lint format type-check coverage clean build dist ci
 
-# Detect Python/pip command
-PYTHON := $(shell which python3 || which python)
-PIP := $(PYTHON) -m pip
+# Detect uv command
+UV := $(shell command -v uv 2>/dev/null || echo "")
+
+
+venv:
+	uv venv
+
+activate: venv
+	. ./.venv/bin/activate
 
 help:
 	@echo "Available targets:"
@@ -21,40 +27,44 @@ help:
 	@echo "  dist            - Create distribution"
 	@echo "  ci              - Run full CI pipeline"
 	@echo ""
-	@echo "Using Python: $(PYTHON)"
-	@echo "Using pip: $(PIP)"
+	@if [ -z "$(UV)" ]; then \
+		echo "⚠️  uv not found. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"; \
+	else \
+		echo "Using uv: $(UV)"; \
+	fi
 
 install:
-	$(PIP) install -e .
+	make activate
+	$(UV) pip install -e .
 
 install-dev:
-	$(PIP) install --upgrade pip
-	$(PIP) install -e ".[dev,all]"
+	make activate
+	$(UV) pip install -e ".[dev,all]"
 
 test:
-	$(PYTHON) -m pytest
+	$(UV) run pytest
 
 test-unit:
-	$(PYTHON) -m pytest -m unit
+	$(UV) run pytest -m unit
 
 test-integration:
-	$(PYTHON) -m pytest -m integration
+	$(UV) run pytest -m integration
 
 test-e2e:
-	$(PYTHON) -m pytest -m e2e
+	$(UV) run pytest -m e2e
 
 lint:
-	$(PYTHON) -m ruff check tinyrag tests
+	$(UV) run ruff check tinyrag tests
 
 format:
-	$(PYTHON) -m black tinyrag tests
-	$(PYTHON) -m ruff check --fix tinyrag tests
+	$(UV) run black tinyrag tests
+	$(UV) run ruff check --fix tinyrag tests
 
 type-check:
-	$(PYTHON) -m mypy tinyrag
+	$(UV) run mypy tinyrag
 
 coverage:
-	$(PYTHON) -m pytest --cov=tinyrag --cov-report=html --cov-report=term-missing
+	$(UV) run pytest --cov=tinyrag --cov-report=html --cov-report=term-missing
 	@echo "Coverage report generated in htmlcov/index.html"
 
 clean:
@@ -71,7 +81,7 @@ clean:
 	find . -type f -name "*.pyc" -delete 2>/dev/null || true
 
 build: clean
-	$(PYTHON) -m build
+	$(UV) build
 
 dist: build
 	@echo "Distribution created in dist/"
