@@ -39,7 +39,7 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
             NumPy array of shape (len(chunks), embedding_dim) with embeddings
         """
         if not chunks:
-            return np.array([]).reshape(0, self._dimension)
+            return np.array([]).reshape(0, self._dimension)  # type: ignore[no-any-return]
 
         texts = [chunk.text for chunk in chunks]
         embeddings = self.model.encode(
@@ -49,7 +49,7 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
             show_progress_bar=False,
         )
 
-        return np.array(embeddings, dtype=np.float32)
+        return np.array(embeddings, dtype=np.float32)  # type: ignore[no-any-return]
 
     def generate_single(self, text: str) -> np.ndarray:
         """Generate embedding for a single text string.
@@ -65,7 +65,7 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
             normalize_embeddings=self.config.normalize,
             show_progress_bar=False,
         )
-        return np.array(embedding, dtype=np.float32)
+        return np.array(embedding, dtype=np.float32)  # type: ignore[no-any-return]
 
     def get_dimension(self) -> int:
         """Get the dimension of embeddings produced by this generator.
@@ -73,4 +73,4 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
         Returns:
             Embedding dimension (e.g., 384 for all-MiniLM-L6-v2)
         """
-        return self._dimension
+        return int(self._dimension)

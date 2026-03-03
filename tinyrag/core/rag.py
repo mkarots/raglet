@@ -34,14 +34,16 @@ class TinyRAG:
         if embedding_generator is None:
             from tinyrag.embeddings.generator import SentenceTransformerGenerator
 
-            self.embedding_generator = SentenceTransformerGenerator(config.embedding)
+            self.embedding_generator: EmbeddingGenerator = SentenceTransformerGenerator(
+                config.embedding
+            )
         else:
             self.embedding_generator = embedding_generator
 
         if vector_store is None:
             from tinyrag.vector_store.faiss_store import FAISSVectorStore
 
-            self.vector_store = FAISSVectorStore(
+            self.vector_store: VectorStore = FAISSVectorStore(
                 embedding_dim=self.embedding_generator.get_dimension(),
                 config=config.search,
             )
