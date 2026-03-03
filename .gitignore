@@ -57,7 +57,7 @@ dmypy.json
 .ruff_cache/
 
 # Project specific
-*.tinyrag
+*.raglet
 test_files/
 temp/
 .benedict.method.yaml

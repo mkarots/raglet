@@ -4,8 +4,8 @@ import pytest
 
 from raglet.config.config import (
     EmbeddingConfig,
+    RAGletConfig,
     SearchConfig,
-    TinyRAGConfig,
 )
 
 
@@ -87,18 +87,18 @@ class TestSearchConfig:
 
 
 @pytest.mark.unit
-class TestTinyRAGConfigM2:
-    """Test TinyRAGConfig with Milestone 2 extensions."""
+class TestRAGletConfigM2:
+    """Test RAGletConfig with Milestone 2 extensions."""
 
     def test_default_config_includes_embedding_and_search(self):
         """Test default config includes embedding and search configs."""
-        config = TinyRAGConfig()
+        config = RAGletConfig()
         assert isinstance(config.embedding, EmbeddingConfig)
         assert isinstance(config.search, SearchConfig)
 
     def test_validation_validates_nested_configs(self):
         """Test validation validates nested configs."""
-        config = TinyRAGConfig()
+        config = RAGletConfig()
         config.embedding.batch_size = 0  # Invalid
         with pytest.raises(ValueError):
             config.validate()
@@ -108,7 +108,7 @@ class TestTinyRAGConfigM2:
         embedding_config = EmbeddingConfig(batch_size=64)
         search_config = SearchConfig(default_top_k=10)
 
-        config = TinyRAGConfig(embedding=embedding_config, search=search_config)
+        config = RAGletConfig(embedding=embedding_config, search=search_config)
 
         assert config.embedding.batch_size == 64
         assert config.search.default_top_k == 10

@@ -5,8 +5,8 @@ import tempfile
 
 import pytest
 
-from raglet import TinyRAG
-from raglet.config.config import TinyRAGConfig
+from raglet import RAGlet
+from raglet.config.config import RAGletConfig
 
 
 @pytest.mark.integration
@@ -26,8 +26,8 @@ class TestFullPipeline:
             with open(file2, "w") as f:
                 f.write("This document discusses machine learning and embeddings.")
 
-            # Create TinyRAG from files
-            rag = TinyRAG.from_files([file1, file2])
+            # Create RAGlet from files
+            rag = RAGlet.from_files([file1, file2])
 
             # Verify chunks were created
             assert len(rag.chunks) > 0
@@ -50,7 +50,7 @@ class TestFullPipeline:
                     "Embeddings are vector representations of text."
                 )
 
-            rag = TinyRAG.from_files([file1])
+            rag = RAGlet.from_files([file1])
 
             # Search for relevant content
             results = rag.search("What is Python?", top_k=3)
@@ -70,10 +70,10 @@ class TestFullPipeline:
             with open(file1, "w") as f:
                 f.write("Test document with multiple sentences. " * 10)
 
-            config = TinyRAGConfig()
+            config = RAGletConfig()
             config.search.default_top_k = 10
 
-            rag = TinyRAG.from_files([file1], config=config)
+            rag = RAGlet.from_files([file1], config=config)
 
             results = rag.search("test", top_k=None)  # Uses config default
             assert len(results) <= 10
@@ -86,7 +86,7 @@ class TestFullPipeline:
             with open(file1, "w") as f:
                 f.write("")
 
-            rag = TinyRAG.from_files([file1])
+            rag = RAGlet.from_files([file1])
 
             # Should handle gracefully
             assert len(rag.chunks) == 0

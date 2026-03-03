@@ -1,4 +1,4 @@
-# tinyrag Documentation
+# raglet Documentation
 
 This directory contains all project documentation organized by type.
 
@@ -18,7 +18,7 @@ See [decisions/README.md](decisions/README.md) for all architectural decisions.
 - [Configuration Exploration](proposals/CONFIG_EXPLORATION.md) - Configuration pattern analysis
 
 ### Problems
-- [Problem Statement](problems/00-problem-statement.md) - Why tinyrag exists (from WHY.md)
+- [Problem Statement](problems/00-problem-statement.md) - Why raglet exists (from WHY.md)
 
 ## Root Documentation
 

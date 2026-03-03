@@ -1,4 +1,4 @@
-# Why tinyrag?
+# Why raglet?
 
 ## The Problem
 
@@ -17,10 +17,10 @@ There's no lightweight, portable way to make a small pile of text searchable and
 
 ## The Idea
 
-tinyrag is portable memory.
+raglet is portable memory.
 
 It takes small context — source files, conversations, notes — and turns it into a
-single `.tinyrag` file that you can save, share, commit, or carry around. Load it
+single `.raglet` file that you can save, share, commit, or carry around. Load it
 anywhere, search it instantly, and get retrieval-ready context for whatever LLM
 or tool you're already using.
 
@@ -30,9 +30,9 @@ No server. No API keys. No infrastructure. Just a Python object and a file.
 
 - **Portable.** One file. Save it, git commit it, email it, drag it to another machine.
 - **Small by design.** Built for workspace-scale problems: codebases, conversations, notes. Not the internet.
-- **Retrieval only.** tinyrag finds the right chunks. You decide what to do with them. Bring your own LLM.
-- **Open format.** The `.tinyrag` file is easily decodable. Embeddings are extractable. No lock-in.
-- **Zero infrastructure.** `pip install tinyrag`. That's it.
+- **Retrieval only.** raglet finds the right chunks. You decide what to do with them. Bring your own LLM.
+- **Open format.** The `.raglet` file is easily decodable. Embeddings are extractable. No lock-in.
+- **Zero infrastructure.** `pip install raglet`. That's it.
 
 ## Who Is This For?
 
@@ -50,6 +50,6 @@ No server. No API keys. No infrastructure. Just a Python object and a file.
 ## The Bet
 
 Most RAG problems are small. A few files. A few thousand chunks. If you make
-retrieval as simple as `pip install` and a `.tinyrag` file, it becomes a building
+retrieval as simple as `pip install` and a `.raglet` file, it becomes a building
 block that shows up everywhere — in scripts, agents, CLI tools, notebooks — anywhere
 someone needs to give an LLM a small, searchable memory.

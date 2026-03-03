@@ -9,12 +9,12 @@ Initial planning documents included web service approaches (FastAPI, React front
 
 ## Decision
 
-Build tinyrag as a **Python library**, not a web service or API.
+Build raglet as a **Python library**, not a web service or API.
 
 ## Rationale
 
 - Aligns with "zero infrastructure" principle from WHY.md
-- Portable `.tinyrag` files don't need servers
+- Portable `.raglet` files don't need servers
 - Easier to integrate into existing workflows
 - Can be used directly by agents
 - Simpler deployment (`pip install`)

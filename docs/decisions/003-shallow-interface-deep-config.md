@@ -14,7 +14,7 @@ Need to balance simplicity for 80% of users with power for 20% of users.
 
 ## Rationale
 
-- API stays simple: `TinyRAG.from_files(["doc.txt"])`
+- API stays simple: `RAGlet.from_files(["doc.txt"])`
 - No nested parameters in constructor
 - Configuration is escape hatch for deep customization
 - Progressive disclosure: simple → override → preset → deep config
@@ -30,12 +30,12 @@ Need to balance simplicity for 80% of users with power for 20% of users.
 
 ```python
 # Shallow interface
-rag = TinyRAG.from_files(["doc.txt"])
+rag = RAGlet.from_files(["doc.txt"])
 
 # Deep configuration
-config = TinyRAGConfig(
+config = RAGletConfig(
     chunking=ChunkingConfig(size=1024, strategy="semantic"),
     embeddings=EmbeddingConfig(model="all-mpnet-base-v2")
 )
-rag = TinyRAG.from_files(["doc.txt"], config=config)
+rag = RAGlet.from_files(["doc.txt"], config=config)
 ```

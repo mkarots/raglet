@@ -1,8 +1,8 @@
-# tinyrag Architecture: SOLID Principles & Clear Responsibilities
+# raglet Architecture: SOLID Principles & Clear Responsibilities
 
 ## Overview
 
-This document defines the architecture of tinyrag following SOLID principles to ensure:
+This document defines the architecture of raglet following SOLID principles to ensure:
 - **Single Responsibility** - Each class/module has one clear purpose
 - **Open/Closed** - Open for extension, closed for modification
 - **Liskov Substitution** - Interfaces can be substituted
@@ -16,9 +16,9 @@ This document defines the architecture of tinyrag following SOLID principles to 
 ### High-Level Structure
 
 ```
-tinyrag/
+raglet/
 ├── core/                    # Core domain logic
-│   ├── rag.py              # TinyRAG main class (orchestrator)
+│   ├── rag.py              # RAGlet main class (orchestrator)
 │   └── chunk.py             # Chunk domain model
 ├── processing/              # Document processing
 │   ├── extractors/          # File type extractors
@@ -31,8 +31,8 @@ tinyrag/
 │   ├── faiss_store.py      # FAISS implementation
 │   └── interfaces.py       # Vector store interfaces
 ├── storage/                 # File format & persistence
-│   ├── serializer.py       # .tinyrag serialization
-│   ├── deserializer.py     # .tinyrag deserialization
+│   ├── serializer.py       # .raglet serialization
+│   ├── deserializer.py     # .raglet deserialization
 │   └── interfaces.py       # Storage interfaces
 ├── config/                  # Configuration system
 │   ├── config.py           # Configuration classes
@@ -52,7 +52,7 @@ Each class/module has **one reason to change**.
 
 #### Core Domain (`core/`)
 
-**`TinyRAG` (orchestrator)**
+**`RAGlet` (orchestrator)**
 - **Responsibility:** Orchestrate the RAG pipeline
 - **Changes when:** Pipeline flow changes
 - **Does NOT:** Process documents, generate embeddings, or search
@@ -105,8 +105,8 @@ Each class/module has **one reason to change**.
 - **Responsibility:** Define contract for serializing RAG to file
 - **Changes when:** Serialization contract changes
 
-**`TinyRAGSerializer` (implementation)**
-- **Responsibility:** Serialize TinyRAG to .tinyrag format
+**`RAGletSerializer` (implementation)**
+- **Responsibility:** Serialize RAGlet to .raglet format
 - **Changes when:** File format changes
 - **Does NOT:** Process documents or search
 
@@ -114,14 +114,14 @@ Each class/module has **one reason to change**.
 - **Responsibility:** Define contract for deserializing RAG from file
 - **Changes when:** Deserialization contract changes
 
-**`TinyRAGDeserializer` (implementation)**
-- **Responsibility:** Deserialize .tinyrag file to TinyRAG
+**`RAGletDeserializer` (implementation)**
+- **Responsibility:** Deserialize .raglet file to RAGlet
 - **Changes when:** File format changes
 - **Does NOT:** Process documents or search
 
 #### Configuration (`config/`)
 
-**`TinyRAGConfig`**
+**`RAGletConfig`**
 - **Responsibility:** Hold configuration data
 - **Changes when:** Configuration structure changes
 - **Does NOT:** Validate or load configs
@@ -290,11 +290,11 @@ class VectorStore(VectorStoreReader, VectorStoreWriter):
 
 **Depend on abstractions, not concretions.**
 
-#### Example: TinyRAG Depends on Interfaces
+#### Example: RAGlet Depends on Interfaces
 
 **Bad Design (violates DIP):**
 ```python
-class TinyRAG:
+class RAGlet:
     def __init__(self):
         self.chunker = Chunker()  # Depends on concrete class
         self.embedder = SentenceTransformerGenerator()  # Depends on concrete class
@@ -305,13 +305,13 @@ class TinyRAG:
 
 **Good Design (follows DIP):**
 ```python
-class TinyRAG:
+class RAGlet:
     def __init__(
         self,
         chunker: Chunker,
         embedding_generator: EmbeddingGenerator,  # Interface
         vector_store: VectorStore,  # Interface
-        config: TinyRAGConfig
+        config: RAGletConfig
     ):
         self.chunker = chunker
         self.embedding_generator = embedding_generator  # Abstraction
@@ -327,7 +327,7 @@ class TinyRAG:
 
 ### Core Domain (`core/`)
 
-#### `TinyRAG` (Orchestrator)
+#### `RAGlet` (Orchestrator)
 
 **Responsibilities:**
 - Orchestrate RAG pipeline (process → chunk → embed → index)
@@ -341,7 +341,7 @@ class TinyRAG:
 - `VectorStore` (interface)
 - `RAGSerializer` (interface)
 - `RAGDeserializer` (interface)
-- `TinyRAGConfig`
+- `RAGletConfig`
 
 **Does NOT:**
 - Process documents directly
@@ -400,7 +400,7 @@ class TinyRAG:
 - Preserve metadata
 
 **Dependencies:**
-- `TinyRAGConfig` (for chunking config)
+- `RAGletConfig` (for chunking config)
 
 **Does NOT:**
 - Extract text
@@ -429,7 +429,7 @@ class TinyRAG:
 
 **Dependencies:**
 - `sentence-transformers` library
-- `TinyRAGConfig` (for embedding config)
+- `RAGletConfig` (for embedding config)
 
 **Does NOT:**
 - Process documents
@@ -478,10 +478,10 @@ class TinyRAG:
 **Dependencies:**
 - None (abstract)
 
-#### `TinyRAGSerializer` (Implementation)
+#### `RAGletSerializer` (Implementation)
 
 **Responsibilities:**
-- Serialize TinyRAG to .tinyrag format
+- Serialize RAGlet to .raglet format
 - Handle compression
 - Write to file
 
@@ -505,10 +505,10 @@ class TinyRAG:
 **Dependencies:**
 - None (abstract)
 
-#### `TinyRAGDeserializer` (Implementation)
+#### `RAGletDeserializer` (Implementation)
 
 **Responsibilities:**
-- Deserialize .tinyrag file to TinyRAG
+- Deserialize .raglet file to RAGlet
 - Handle decompression
 - Read from file
 
@@ -527,7 +527,7 @@ class TinyRAG:
 
 ### Configuration (`config/`)
 
-#### `TinyRAGConfig`
+#### `RAGletConfig`
 
 **Responsibilities:**
 - Hold configuration data
@@ -549,7 +549,7 @@ class TinyRAG:
 - Raise validation errors
 
 **Dependencies:**
-- `TinyRAGConfig`
+- `RAGletConfig`
 
 **Does NOT:**
 - Hold config data
@@ -560,11 +560,11 @@ class TinyRAG:
 **Responsibilities:**
 - Load configuration from files (YAML, JSON)
 - Parse configuration data
-- Return `TinyRAGConfig` instance
+- Return `RAGletConfig` instance
 
 **Dependencies:**
 - `yaml` or `json` libraries
-- `TinyRAGConfig`
+- `RAGletConfig`
 
 **Does NOT:**
 - Validate configs
@@ -575,23 +575,23 @@ class TinyRAG:
 ## 4. Dependency Graph
 
 ```
-TinyRAG (orchestrator)
+RAGlet (orchestrator)
     ├── Chunker
-    │   └── TinyRAGConfig
+    │   └── RAGletConfig
     ├── DocumentExtractor (interface)
     │   ├── TextExtractor
     │   ├── PDFExtractor
     │   └── HTMLExtractor
     ├── EmbeddingGenerator (interface)
     │   └── SentenceTransformerGenerator
-    │       └── TinyRAGConfig
+    │       └── RAGletConfig
     ├── VectorStore (interface)
     │   └── FAISSVectorStore
     ├── RAGSerializer (interface)
-    │   └── TinyRAGSerializer
+    │   └── RAGletSerializer
     ├── RAGDeserializer (interface)
-    │   └── TinyRAGDeserializer
-    └── TinyRAGConfig
+    │   └── RAGletDeserializer
+    └── RAGletConfig
         ├── ChunkingConfig
         ├── EmbeddingConfig
         ├── SearchConfig
@@ -599,7 +599,7 @@ TinyRAG (orchestrator)
 ```
 
 **Key Points:**
-- TinyRAG depends on interfaces, not implementations
+- RAGlet depends on interfaces, not implementations
 - Components depend on config, not each other
 - Clear separation of concerns
 
@@ -711,7 +711,7 @@ class RAGSerializer(ABC):
     """Interface for serializing RAG to file."""
     
     @abstractmethod
-    def serialize(self, rag: "TinyRAG", file_path: str) -> None:
+    def serialize(self, rag: "RAGlet", file_path: str) -> None:
         """Serialize RAG to file."""
         pass
 
@@ -719,7 +719,7 @@ class RAGDeserializer(ABC):
     """Interface for deserializing RAG from file."""
     
     @abstractmethod
-    def deserialize(self, file_path: str) -> "TinyRAG":
+    def deserialize(self, file_path: str) -> "RAGlet":
         """Deserialize RAG from file."""
         pass
 ```
@@ -728,7 +728,7 @@ class RAGDeserializer(ABC):
 
 ## 6. Implementation Example
 
-### TinyRAG Class (Following SOLID)
+### RAGlet Class (Following SOLID)
 
 ```python
 # core/rag.py
@@ -739,9 +739,9 @@ from processing.interfaces import DocumentExtractor, Chunker
 from embeddings.interfaces import EmbeddingGenerator
 from vector_store.interfaces import VectorStore
 from storage.interfaces import RAGSerializer, RAGDeserializer
-from config.config import TinyRAGConfig
+from config.config import RAGletConfig
 
-class TinyRAG:
+class RAGlet:
     """
     Main RAG class - orchestrates the pipeline.
     
@@ -754,7 +754,7 @@ class TinyRAG:
         chunks: List[Chunk],
         embeddings: np.ndarray,
         vector_store: VectorStore,  # Interface, not concrete
-        config: TinyRAGConfig
+        config: RAGletConfig
     ):
         self.chunks = chunks
         self.embeddings = embeddings
@@ -769,10 +769,10 @@ class TinyRAG:
         chunker: Chunker,  # Interface
         embedding_generator: EmbeddingGenerator,  # Interface
         vector_store_factory: callable,  # Factory for VectorStore
-        config: TinyRAGConfig
-    ) -> "TinyRAG":
+        config: RAGletConfig
+    ) -> "RAGlet":
         """
-        Create TinyRAG from files.
+        Create RAGlet from files.
         
         Depends on interfaces, not concrete implementations.
         """
@@ -830,7 +830,7 @@ class TinyRAG:
         file_path: str,
         serializer: RAGSerializer  # Interface
     ) -> None:
-        """Save to .tinyrag file."""
+        """Save to .raglet file."""
         serializer.serialize(self, file_path)
     
     @classmethod
@@ -840,8 +840,8 @@ class TinyRAG:
         deserializer: RAGDeserializer,  # Interface
         embedding_generator: EmbeddingGenerator,  # Interface
         vector_store_factory: callable  # Factory
-    ) -> "TinyRAG":
-        """Load from .tinyrag file."""
+    ) -> "RAGlet":
+        """Load from .raglet file."""
         return deserializer.deserialize(file_path, embedding_generator, vector_store_factory)
 ```
 
@@ -858,9 +858,9 @@ from processing.extractors import TextExtractor, PDFExtractor, HTMLExtractor
 from processing.chunker import Chunker
 from embeddings.generator import SentenceTransformerGenerator
 from vector_store.faiss_store import FAISSVectorStore
-from storage.serializer import TinyRAGSerializer
-from storage.deserializer import TinyRAGDeserializer
-from config.config import TinyRAGConfig
+from storage.serializer import RAGletSerializer
+from storage.deserializer import RAGletDeserializer
+from config.config import RAGletConfig
 
 def create_document_extractor(file_path: str) -> DocumentExtractor:
     """Factory for document extractors."""
@@ -871,11 +871,11 @@ def create_document_extractor(file_path: str) -> DocumentExtractor:
     else:
         return TextExtractor()
 
-def create_chunker(config: TinyRAGConfig) -> Chunker:
+def create_chunker(config: RAGletConfig) -> Chunker:
     """Factory for chunker."""
     return Chunker(config.chunking)
 
-def create_embedding_generator(config: TinyRAGConfig) -> EmbeddingGenerator:
+def create_embedding_generator(config: RAGletConfig) -> EmbeddingGenerator:
     """Factory for embedding generator."""
     return SentenceTransformerGenerator(config.embeddings)
 
@@ -885,19 +885,19 @@ def create_vector_store(dimension: int) -> VectorStore:
 
 def create_serializer() -> RAGSerializer:
     """Factory for serializer."""
-    return TinyRAGSerializer()
+    return RAGletSerializer()
 
 def create_deserializer() -> RAGDeserializer:
     """Factory for deserializer."""
-    return TinyRAGDeserializer()
+    return RAGletDeserializer()
 ```
 
 ### Usage with Factories
 
 ```python
 # Simple usage - factories handle dependencies
-config = TinyRAGConfig()
-rag = TinyRAG.from_files(
+config = RAGletConfig()
+rag = RAGlet.from_files(
     files=["doc.txt"],
     document_extractor=create_document_extractor("doc.txt"),
     chunker=create_chunker(config),
@@ -960,7 +960,7 @@ rag = TinyRAG.from_files(
 
 ### Clear Responsibilities
 
-- **TinyRAG** - Orchestrates pipeline
+- **RAGlet** - Orchestrates pipeline
 - **Extractors** - Extract text from files
 - **Chunker** - Split text into chunks
 - **EmbeddingGenerator** - Generate embeddings

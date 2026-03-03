@@ -5,16 +5,16 @@ import tempfile
 
 import pytest
 
-from raglet.config.config import ChunkingConfig, TinyRAGConfig
-from raglet.core.rag import TinyRAG
+from raglet.config.config import ChunkingConfig, RAGletConfig
+from raglet.core.rag import RAGlet
 
 
 @pytest.mark.e2e
 class TestE2EBasic:
-    """End-to-end tests for basic TinyRAG functionality."""
+    """End-to-end tests for basic RAGlet functionality."""
 
     def test_e2e_create_from_files(self):
-        """E2E test: Create TinyRAG from files."""
+        """E2E test: Create RAGlet from files."""
         # Create test files
         test_dir = tempfile.mkdtemp()
         files = []
@@ -31,8 +31,8 @@ class TestE2EBasic:
                     )
                 files.append(file_path)
 
-            # Create TinyRAG
-            rag = TinyRAG.from_files(files)
+            # Create RAGlet
+            rag = RAGlet.from_files(files)
 
             # Verify results
             assert len(rag.chunks) > 0
@@ -57,7 +57,7 @@ class TestE2EBasic:
             os.rmdir(test_dir)
 
     def test_e2e_with_config(self):
-        """E2E test: Create TinyRAG with custom configuration."""
+        """E2E test: Create RAGlet with custom configuration."""
         test_dir = tempfile.mkdtemp()
         file_path = os.path.join(test_dir, "test.txt")
 
@@ -66,9 +66,9 @@ class TestE2EBasic:
                 f.write("This is a longer document. " * 50)  # Create longer content
 
             # Create with custom config
-            config = TinyRAGConfig(chunking=ChunkingConfig(size=100, overlap=10))
+            config = RAGletConfig(chunking=ChunkingConfig(size=100, overlap=10))
 
-            rag = TinyRAG.from_files([file_path], config=config)
+            rag = RAGlet.from_files([file_path], config=config)
 
             # Verify config is applied
             assert rag.config.chunking.size == 100
@@ -83,13 +83,13 @@ class TestE2EBasic:
             os.rmdir(test_dir)
 
     def test_e2e_get_all_chunks(self):
-        """E2E test: Get all chunks from TinyRAG."""
+        """E2E test: Get all chunks from RAGlet."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("Test document with content.")
             temp_path = f.name
 
         try:
-            rag = TinyRAG.from_files([temp_path])
+            rag = RAGlet.from_files([temp_path])
 
             # Get all chunks
             chunks = rag.get_all_chunks()
@@ -120,8 +120,8 @@ class TestE2EBasic:
                 f.write("# Markdown\n\nMarkdown file content.")
             files.append(md_file)
 
-            # Create TinyRAG from mixed files
-            rag = TinyRAG.from_files(files)
+            # Create RAGlet from mixed files
+            rag = RAGlet.from_files(files)
 
             # Verify both file types processed
             sources = {chunk.source for chunk in rag.chunks}

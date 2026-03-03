@@ -5,8 +5,8 @@ import tempfile
 
 import pytest
 
-from raglet.config.config import ChunkingConfig, TinyRAGConfig
-from raglet.core.rag import TinyRAG
+from raglet.config.config import ChunkingConfig, RAGletConfig
+from raglet.core.rag import RAGlet
 
 
 @pytest.mark.integration
@@ -14,7 +14,7 @@ class TestExtractChunkFlow:
     """Test extract → chunk integration."""
 
     def test_from_files_txt(self):
-        """Test creating TinyRAG from text files."""
+        """Test creating RAGlet from text files."""
         # Create temporary text file
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write(
@@ -23,7 +23,7 @@ class TestExtractChunkFlow:
             temp_path = f.name
 
         try:
-            rag = TinyRAG.from_files([temp_path])
+            rag = RAGlet.from_files([temp_path])
 
             assert len(rag.chunks) > 0
             assert all(chunk.source == temp_path for chunk in rag.chunks)
@@ -32,14 +32,14 @@ class TestExtractChunkFlow:
             os.unlink(temp_path)
 
     def test_from_files_markdown(self):
-        """Test creating TinyRAG from markdown files."""
+        """Test creating RAGlet from markdown files."""
         # Create temporary markdown file
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("# Title\n\nThis is a markdown document. It has **formatting**.")
             temp_path = f.name
 
         try:
-            rag = TinyRAG.from_files([temp_path])
+            rag = RAGlet.from_files([temp_path])
 
             assert len(rag.chunks) > 0
             assert all(chunk.source == temp_path for chunk in rag.chunks)
@@ -47,7 +47,7 @@ class TestExtractChunkFlow:
             os.unlink(temp_path)
 
     def test_from_files_multiple(self):
-        """Test creating TinyRAG from multiple files."""
+        """Test creating RAGlet from multiple files."""
         files = []
 
         try:
@@ -58,7 +58,7 @@ class TestExtractChunkFlow:
                 f.close()
                 files.append(f.name)
 
-            rag = TinyRAG.from_files(files)
+            rag = RAGlet.from_files(files)
 
             assert len(rag.chunks) > 0
             # Check that chunks come from different sources
@@ -69,15 +69,15 @@ class TestExtractChunkFlow:
                 os.unlink(f)
 
     def test_from_files_with_config(self):
-        """Test creating TinyRAG with custom config."""
-        config = TinyRAGConfig(chunking=ChunkingConfig(size=100, overlap=10))
+        """Test creating RAGlet with custom config."""
+        config = RAGletConfig(chunking=ChunkingConfig(size=100, overlap=10))
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("Short document.")
             temp_path = f.name
 
         try:
-            rag = TinyRAG.from_files([temp_path], config=config)
+            rag = RAGlet.from_files([temp_path], config=config)
 
             assert rag.config.chunking.size == 100
             assert rag.config.chunking.overlap == 10
@@ -91,7 +91,7 @@ class TestExtractChunkFlow:
             temp_path = f.name
 
         try:
-            rag = TinyRAG.from_files([temp_path])
+            rag = RAGlet.from_files([temp_path])
             chunks = rag.get_all_chunks()
 
             assert chunks == rag.chunks

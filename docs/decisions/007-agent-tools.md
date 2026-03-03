@@ -5,11 +5,11 @@
 
 ## Context
 
-Agents need programmatic access to tinyrag functionality.
+Agents need programmatic access to raglet functionality.
 
 ## Decision
 
-Expose as Anthropic tools: `create_tinyrag`, `search_tinyrag`, `get_tinyrag_info`.
+Expose as Anthropic tools: `create_raglet`, `search_raglet`, `get_raglet_info`.
 
 ## Rationale
 
@@ -27,6 +27,6 @@ Expose as Anthropic tools: `create_tinyrag`, `search_tinyrag`, `get_tinyrag_info
 
 ## Tools
 
-1. `create_tinyrag` - Create .tinyrag file from documents
-2. `search_tinyrag` - Search a .tinyrag file
-3. `get_tinyrag_info` - Get metadata about file
+1. `create_raglet` - Create .raglet file from documents
+2. `search_raglet` - Search a .raglet file
+3. `get_raglet_info` - Get metadata about file

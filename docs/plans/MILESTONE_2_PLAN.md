@@ -23,7 +23,7 @@ Milestone 2 implements the core retrieval capabilities: generating embeddings fr
 
 Following SOLID principles established in Milestone 1:
 
-- **Dependency Inversion:** `TinyRAG` depends on `EmbeddingGenerator` and `VectorStore` interfaces, not concrete implementations
+- **Dependency Inversion:** `RAGlet` depends on `EmbeddingGenerator` and `VectorStore` interfaces, not concrete implementations
 - **Single Responsibility:** Embedding generation is separate from vector storage/search
 - **Open/Closed:** New embedding models or vector stores can be added without modifying existing code
 
@@ -34,8 +34,8 @@ Following SOLID principles established in Milestone 1:
 ### 0. Interface Definitions (Prerequisites)
 
 **Files:** 
-- `tinyrag/embeddings/interfaces.py`
-- `tinyrag/vector_store/interfaces.py`
+- `raglet/embeddings/interfaces.py`
+- `raglet/vector_store/interfaces.py`
 
 **Requirements:**
 - [ ] Create `embeddings/interfaces.py` with `EmbeddingGenerator` interface
@@ -55,9 +55,9 @@ Following SOLID principles established in Milestone 1:
 
 ### 1. Embedding Generator Implementation
 
-**File:** `tinyrag/embeddings/generator.py`
+**File:** `raglet/embeddings/generator.py`
 
-**Interface:** `tinyrag/embeddings/interfaces.py` (created in step 0)
+**Interface:** `raglet/embeddings/interfaces.py` (created in step 0)
 
 **Implementation: `SentenceTransformerGenerator`**
 
@@ -95,8 +95,8 @@ Following SOLID principles established in Milestone 1:
 
 **Example Usage:**
 ```python
-from tinyrag.embeddings.generator import SentenceTransformerGenerator
-from tinyrag.config.config import EmbeddingConfig
+from raglet.embeddings.generator import SentenceTransformerGenerator
+from raglet.config.config import EmbeddingConfig
 
 config = EmbeddingConfig(
     model="all-MiniLM-L6-v2",
@@ -113,9 +113,9 @@ embeddings = generator.generate(chunks)  # np.ndarray shape (len(chunks), 384)
 
 ### 2. Vector Store Implementation
 
-**File:** `tinyrag/vector_store/faiss_store.py`
+**File:** `raglet/vector_store/faiss_store.py`
 
-**Interface:** `tinyrag/vector_store/interfaces.py` (already defined in Milestone 1)
+**Interface:** `raglet/vector_store/interfaces.py` (already defined in Milestone 1)
 
 **Implementation: `FAISSVectorStore`**
 
@@ -156,8 +156,8 @@ embeddings = generator.generate(chunks)  # np.ndarray shape (len(chunks), 384)
 
 **Example Usage:**
 ```python
-from tinyrag.vector_store.faiss_store import FAISSVectorStore
-from tinyrag.config.config import SearchConfig
+from raglet.vector_store.faiss_store import FAISSVectorStore
+from raglet.config.config import SearchConfig
 
 config = SearchConfig(
     default_top_k=5,
@@ -180,7 +180,7 @@ results = store.search(query_embedding, top_k=5)
 
 ### 3. Configuration Extension
 
-**File:** `tinyrag/config/config.py`
+**File:** `raglet/config/config.py`
 
 **Extend existing config classes:**
 
@@ -197,7 +197,7 @@ results = store.search(query_embedding, top_k=5)
 - [ ] `index_type: str = "flat_l2"` - FAISS index type
 - [ ] `validate()` method - Validate top_k > 0, threshold in [0, 1] if set
 
-**Update: `TinyRAGConfig`**
+**Update: `RAGletConfig`**
 - [ ] Add `embedding: EmbeddingConfig` field
 - [ ] Add `search: SearchConfig` field
 - [ ] Update `validate()` to validate nested configs
@@ -206,14 +206,14 @@ results = store.search(query_embedding, top_k=5)
 **Testing:**
 - [ ] Unit test: EmbeddingConfig validation
 - [ ] Unit test: SearchConfig validation
-- [ ] Unit test: TinyRAGConfig with nested configs
+- [ ] Unit test: RAGletConfig with nested configs
 - [ ] Unit test: Config serialization/deserialization
 
 **Example:**
 ```python
-from tinyrag.config.config import TinyRAGConfig, EmbeddingConfig, SearchConfig
+from raglet.config.config import RAGletConfig, EmbeddingConfig, SearchConfig
 
-config = TinyRAGConfig(
+config = RAGletConfig(
     chunking=ChunkingConfig(size=512, overlap=50),
     embedding=EmbeddingConfig(
         model="all-MiniLM-L6-v2",
@@ -231,27 +231,27 @@ config = TinyRAGConfig(
 
 ### 4. Core Integration
 
-**File:** `tinyrag/core/rag.py`
+**File:** `raglet/core/rag.py`
 
-**Complete `TinyRAG.from_files()` implementation:**
+**Complete `RAGlet.from_files()` implementation:**
 
 **Requirements:**
 - [ ] Wire up full pipeline: Extract → Chunk → Embed → Index
 - [ ] Use dependency injection (interfaces, not concrete classes)
 - [ ] Create default implementations via factories if not provided
 - [ ] Handle errors gracefully at each step
-- [ ] Store chunks, embeddings, and index in TinyRAG instance
-- [ ] Return fully initialized TinyRAG with searchable index
+- [ ] Store chunks, embeddings, and index in RAGlet instance
+- [ ] Return fully initialized RAGlet with searchable index
 
 **Pipeline Flow:**
 1. Extract text from files (using `DocumentExtractor`)
 2. Chunk text (using `Chunker`)
 3. Generate embeddings (using `EmbeddingGenerator`)
 4. Add to vector store (using `VectorStore`)
-5. Store references in TinyRAG instance
+5. Store references in RAGlet instance
 
 **Dependencies:**
-- `TinyRAG` receives `EmbeddingGenerator` and `VectorStore` via constructor or factory
+- `RAGlet` receives `EmbeddingGenerator` and `VectorStore` via constructor or factory
 - Factory functions create default implementations if not provided
 - All components use interfaces (Dependency Inversion Principle)
 
@@ -266,31 +266,31 @@ config = TinyRAGConfig(
 - [ ] Integration test: Custom embedding generator (mock)
 - [ ] Integration test: Custom vector store (mock)
 - [ ] Integration test: Error handling at each step
-- [ ] E2E test: Create TinyRAG → Search → Verify results
+- [ ] E2E test: Create RAGlet → Search → Verify results
 
 **Example:**
 ```python
-from tinyrag import TinyRAG
-from tinyrag.config.config import TinyRAGConfig
+from raglet import RAGlet
+from raglet.config.config import RAGletConfig
 
 # Simple usage (uses defaults)
-rag = TinyRAG.from_files(["doc1.txt", "doc2.md"])
+rag = RAGlet.from_files(["doc1.txt", "doc2.md"])
 
 # With custom config
-config = TinyRAGConfig(
+config = RAGletConfig(
     embedding=EmbeddingConfig(model="all-mpnet-base-v2"),
     search=SearchConfig(default_top_k=10)
 )
-rag = TinyRAG.from_files(["doc1.txt"], config=config)
+rag = RAGlet.from_files(["doc1.txt"], config=config)
 
 # With custom components (dependency injection)
-from tinyrag.embeddings.generator import SentenceTransformerGenerator
-from tinyrag.vector_store.faiss_store import FAISSVectorStore
+from raglet.embeddings.generator import SentenceTransformerGenerator
+from raglet.vector_store.faiss_store import FAISSVectorStore
 
 generator = SentenceTransformerGenerator(config.embedding)
 store = FAISSVectorStore(embedding_dim=generator.get_dimension(), config=config.search)
 
-rag = TinyRAG.from_files(
+rag = RAGlet.from_files(
     ["doc1.txt"],
     embedding_generator=generator,
     vector_store=store,
@@ -302,9 +302,9 @@ rag = TinyRAG.from_files(
 
 ### 5. Search API Implementation
 
-**File:** `tinyrag/core/rag.py`
+**File:** `raglet/core/rag.py`
 
-**Add `search()` method to `TinyRAG`:**
+**Add `search()` method to `RAGlet`:**
 
 **Requirements:**
 - [ ] Accept query string (not just vector)
@@ -346,7 +346,7 @@ def search(
 
 **Example:**
 ```python
-rag = TinyRAG.from_files(["doc1.txt", "doc2.md"])
+rag = RAGlet.from_files(["doc1.txt", "doc2.md"])
 
 # Simple search
 results = rag.search("what is X?")
@@ -371,9 +371,9 @@ for chunk in results:
 2. **SentenceTransformerGenerator** - Implement embedding generation
 3. **SearchConfig** - Define search configuration
 4. **FAISSVectorStore** - Implement vector storage/search
-5. **TinyRAGConfig extension** - Wire up nested configs
-6. **TinyRAG.from_files()** - Complete pipeline integration
-7. **TinyRAG.search()** - Add search API
+5. **RAGletConfig extension** - Wire up nested configs
+6. **RAGlet.from_files()** - Complete pipeline integration
+7. **RAGlet.search()** - Add search API
 
 **Rationale:**
 - Config first (defines contracts)
@@ -419,7 +419,7 @@ for chunk in results:
 - [ ] `test_e2e_search.py` - Full workflow: create → search → verify
 
 **Test Cases:**
-- Create TinyRAG from files
+- Create RAGlet from files
 - Search for specific content
 - Verify top result is relevant
 - Verify scores are reasonable
@@ -499,7 +499,7 @@ gpu = [
 - [ ] Document search configuration
 
 **Create/Update:**
-- [ ] `docs/API.md` - Document `TinyRAG.search()` method
+- [ ] `docs/API.md` - Document `RAGlet.search()` method
 - [ ] `docs/ARCHITECTURE.md` - Document embedding and vector store components
 
 ---
@@ -509,9 +509,9 @@ gpu = [
 - [ ] `SentenceTransformerGenerator` implemented and tested
 - [ ] `FAISSVectorStore` implemented and tested
 - [ ] `EmbeddingConfig` and `SearchConfig` implemented
-- [ ] `TinyRAGConfig` extended with nested configs
-- [ ] `TinyRAG.from_files()` completes full pipeline
-- [ ] `TinyRAG.search()` method implemented
+- [ ] `RAGletConfig` extended with nested configs
+- [ ] `RAGlet.from_files()` completes full pipeline
+- [ ] `RAGlet.search()` method implemented
 - [ ] Unit tests written and passing
 - [ ] Integration tests written and passing
 - [ ] E2E tests written and passing
@@ -524,11 +524,11 @@ gpu = [
 
 Once Milestone 2 is complete, we'll have:
 - ✅ Full retrieval pipeline working
-- ✅ Searchable TinyRAG instances
+- ✅ Searchable RAGlet instances
 - ✅ Foundation for Milestone 3 (file format)
 
 **Milestone 3 will add:**
-- Save/load `.tinyrag` files
+- Save/load `.raglet` files
 - Serialize embeddings and FAISS index
 - Portable file format
 

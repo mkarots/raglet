@@ -1,4 +1,4 @@
-# tinyrag Decision Document
+# raglet Decision Document
 
 **Status:** Planning & Design Phase  
 **Date:** February 2026
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-**tinyrag** is a Python library that creates portable `.tinyrag` files - single-file knowledge bases containing chunks, embeddings, and metadata. It solves the problem of making small text corpora (codebases, conversations, notes) searchable without infrastructure complexity.
+**raglet** is a Python library that creates portable `.raglet` files - single-file knowledge bases containing chunks, embeddings, and metadata. It solves the problem of making small text corpora (codebases, conversations, notes) searchable without infrastructure complexity.
 
 **Current Phase:** Design complete, ready for implementation  
 **Decision:** Proceed with Python library implementation following the "tiny" philosophy
@@ -36,9 +36,9 @@ These are small (a few megabytes) but don't fit in a context window. They also d
 
 ### The Solution
 
-**tinyrag is portable memory.**
+**raglet is portable memory.**
 
-It takes small context and turns it into a single `.tinyrag` file that you can:
+It takes small context and turns it into a single `.raglet` file that you can:
 - Save, share, commit, or carry around
 - Load anywhere
 - Search instantly
@@ -50,9 +50,9 @@ It takes small context and turns it into a single `.tinyrag` file that you can:
 
 1. **Portable** - One file. Save it, git commit it, email it, drag it to another machine
 2. **Small by design** - Built for workspace-scale problems (codebases, conversations, notes). Not the internet
-3. **Retrieval only** - tinyrag finds the right chunks. You decide what to do with them. Bring your own LLM
-4. **Open format** - The `.tinyrag` file is easily decodable. Embeddings are extractable. No lock-in
-5. **Zero infrastructure** - `pip install tinyrag`. That's it
+3. **Retrieval only** - raglet finds the right chunks. You decide what to do with them. Bring your own LLM
+4. **Open format** - The `.raglet` file is easily decodable. Embeddings are extractable. No lock-in
+5. **Zero infrastructure** - `pip install raglet`. That's it
 
 ---
 
@@ -74,7 +74,7 @@ It takes small context and turns it into a single `.tinyrag` file that you can:
 ### What We've Decided
 
 1. **Library, not service** - Python library, not web API
-2. **Portable files** - `.tinyrag` format is core value proposition
+2. **Portable files** - `.raglet` format is core value proposition
 3. **Retrieval-only** - No LLM integration in library
 4. **Opinionated defaults** - Works for 80% of users out of the box
 5. **Agent-friendly** - Exposed as Anthropic tools for AI agents
@@ -98,7 +98,7 @@ It takes small context and turns it into a single `.tinyrag` file that you can:
 - Production RAG systems requiring high availability
 - Real-time updates (files are static snapshots)
 
-**The Bet:** Most RAG problems are small. A few files. A few thousand chunks. If retrieval is as simple as `pip install` and a `.tinyrag` file, it becomes a building block that shows up everywhere.
+**The Bet:** Most RAG problems are small. A few files. A few thousand chunks. If retrieval is as simple as `pip install` and a `.raglet` file, it becomes a building block that shows up everywhere.
 
 ### Q2: Why not use existing solutions?
 
@@ -109,7 +109,7 @@ It takes small context and turns it into a single `.tinyrag` file that you can:
 | **Pinecone/Weaviate** | High | Low (cloud) | Required |
 | **ChromaDB/LanceDB** | Medium | Medium | Local server |
 | **LangChain + FAISS** | Medium | Low | Code complexity |
-| **tinyrag** | Low | High (single file) | None |
+| **raglet** | Low | High (single file) | None |
 
 **Differentiation:**
 - **Portability:** Single file vs. databases/servers
@@ -134,7 +134,7 @@ It takes small context and turns it into a single `.tinyrag` file that you can:
 
 **Key Differences:**
 
-| Aspect | LangChain/LLamaIndex | tinyrag |
+| Aspect | LangChain/LLamaIndex | raglet |
 |--------|---------------------|---------|
 | **Scope** | Full RAG pipeline | Retrieval only |
 | **Portability** | Code + config | Single file |
@@ -142,7 +142,7 @@ It takes small context and turns it into a single `.tinyrag` file that you can:
 | **Infrastructure** | Often requires DBs | Zero |
 | **Use Case** | Production systems | Workspace-scale |
 
-**tinyrag is complementary:** Use tinyrag for portable knowledge bases, LangChain for full pipelines.
+**raglet is complementary:** Use raglet for portable knowledge bases, LangChain for full pipelines.
 
 ### Q5: Is the file format a good idea?
 
@@ -256,9 +256,9 @@ It takes small context and turns it into a single `.tinyrag` file that you can:
 **Decision:** Expose as Anthropic tools
 
 **Tools:**
-1. `create_tinyrag` - Create .tinyrag file from documents
-2. `search_tinyrag` - Search a .tinyrag file
-3. `get_tinyrag_info` - Get metadata about file
+1. `create_raglet` - Create .raglet file from documents
+2. `search_raglet` - Search a .raglet file
+3. `get_raglet_info` - Get metadata about file
 
 **Rationale:**
 - Agents need programmatic access
@@ -273,26 +273,26 @@ It takes small context and turns it into a single `.tinyrag` file that you can:
 ### Core API
 
 ```python
-from tinyrag import TinyRAG
+from raglet import RAGlet
 
 # Simplest - just works
-rag = TinyRAG.from_files(["doc.txt"])
+rag = RAGlet.from_files(["doc.txt"])
 
 # Override defaults
-rag = TinyRAG.from_files(
+rag = RAGlet.from_files(
     ["doc.txt"],
     chunk_size=1024,
     top_k=10
 )
 
 # Use preset
-rag = TinyRAG.from_files(["codebase/"], preset="codebase")
+rag = RAGlet.from_files(["codebase/"], preset="codebase")
 
 # Save portable file
-rag.save("knowledge.tinyrag")
+rag.save("knowledge.raglet")
 
 # Load later
-rag = TinyRAG.load("knowledge.tinyrag")
+rag = RAGlet.load("knowledge.raglet")
 
 # Search
 results = rag.search("what is X?", top_k=5)
@@ -301,39 +301,39 @@ results = rag.search("what is X?", top_k=5)
 ### Configuration API
 
 ```python
-from tinyrag import TinyRAGConfig
+from raglet import RAGletConfig
 
 # Create reusable config
-config = TinyRAGConfig(
+config = RAGletConfig(
     chunk_size=512,
     embedding_model="all-mpnet-base-v2"
 )
 
 # Use config
-rag = TinyRAG.from_files(["doc.txt"], config=config)
+rag = RAGlet.from_files(["doc.txt"], config=config)
 
 # Save/load config
 config.save("project_config.yaml")
-config = TinyRAGConfig.load("project_config.yaml")
+config = RAGletConfig.load("project_config.yaml")
 ```
 
 ### Agent Tools API
 
 ```python
-from tinyrag.tools import (
-    create_tinyrag,
-    search_tinyrag,
-    get_tinyrag_info
+from raglet.tools import (
+    create_raglet,
+    search_raglet,
+    get_raglet_info
 )
 
 # Agent can call these functions
-result = create_tinyrag(
+result = create_raglet(
     file_paths=["doc1.txt", "doc2.md"],
-    output_path="knowledge.tinyrag"
+    output_path="knowledge.raglet"
 )
 
-results = search_tinyrag(
-    file_path="knowledge.tinyrag",
+results = search_raglet(
+    file_path="knowledge.raglet",
     query="what is X?",
     top_k=5
 )
@@ -347,7 +347,7 @@ results = search_tinyrag(
 - Package structure
 - Document processor (.txt, .md)
 - Chunker (512 tokens, 50 overlap)
-- Basic TinyRAG class
+- Basic RAGlet class
 
 ### Phase 2: Embeddings & Search (Week 2)
 - sentence-transformers integration
@@ -356,7 +356,7 @@ results = search_tinyrag(
 - Unit tests
 
 ### Phase 3: File Format (Week 3)
-- .tinyrag serialization
+- .raglet serialization
 - Save/load methods
 - Compression
 - Version handling
@@ -378,8 +378,8 @@ results = search_tinyrag(
 ## 7. Success Criteria
 
 ### MVP Success
-- ✅ Create `.tinyrag` file from 5 text files in <10 seconds
-- ✅ Load `.tinyrag` file and search in <1 second
+- ✅ Create `.raglet` file from 5 text files in <10 seconds
+- ✅ Load `.raglet` file and search in <1 second
 - ✅ Accurate retrieval (top-5 chunks are relevant)
 - ✅ File size reasonable (<10MB for 1000 chunks)
 - ✅ Works on macOS, Linux, Windows
@@ -477,7 +477,7 @@ results = search_tinyrag(
 1. Set up Python package structure
 2. Implement document processor
 3. Implement chunker
-4. Create basic TinyRAG class
+4. Create basic RAGlet class
 
 ### Short-term (Weeks 2-3)
 1. Integrate embeddings
@@ -537,7 +537,7 @@ results = search_tinyrag(
 - **CONFIG_EXPLORATION.md** - Configuration pattern analysis
 - **CONFIG_RECOMMENDATION.md** - Configuration decisions
 - **CONFIG_EXAMPLES.md** - Configuration usage examples
-- **tinyrag_python_library_roadmap.md** - Detailed implementation plan
+- **raglet_python_library_roadmap.md** - Detailed implementation plan
 
 ---
 

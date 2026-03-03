@@ -5,16 +5,16 @@ __version__ = "0.1.0"
 from raglet.config.config import (
     ChunkingConfig,
     EmbeddingConfig,
+    RAGletConfig,
     SearchConfig,
-    TinyRAGConfig,
 )
 from raglet.core.chunk import Chunk
-from raglet.core.rag import TinyRAG
+from raglet.core.rag import RAGlet
 
 __all__ = [
-    "TinyRAG",
+    "RAGlet",
     "Chunk",
-    "TinyRAGConfig",
+    "RAGletConfig",
     "ChunkingConfig",
     "EmbeddingConfig",
     "SearchConfig",

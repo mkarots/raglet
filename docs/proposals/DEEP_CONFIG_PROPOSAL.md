@@ -1,4 +1,4 @@
-# Deep Configuration Proposal for tinyrag
+# Deep Configuration Proposal for raglet
 
 ## Philosophy: "Shallow Interfaces, Deep Configuration"
 
@@ -114,7 +114,7 @@ class FileProcessingConfig:
         """Validate file processing configuration."""
 
 @dataclass
-class TinyRAGConfig:
+class RAGletConfig:
     """Main configuration class with nested components."""
     # Nested configs
     chunking: ChunkingConfig = field(default_factory=ChunkingConfig)
@@ -138,13 +138,13 @@ class TinyRAGConfig:
         self.search.validate()
         self.file_processing.validate()
     
-    def merge(self, other: "TinyRAGConfig") -> "TinyRAGConfig":
+    def merge(self, other: "RAGletConfig") -> "RAGletConfig":
         """Deep merge with another config."""
         # Merge nested configs recursively
         ...
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TinyRAGConfig":
+    def from_dict(cls, data: Dict[str, Any]) -> "RAGletConfig":
         """Create config from dictionary (nested)."""
         ...
     
@@ -161,13 +161,13 @@ class TinyRAGConfig:
 
 ```python
 # Level 1: Simplest - just works
-rag = TinyRAG.from_files(["doc.txt"])
+rag = RAGlet.from_files(["doc.txt"])
 
 # Level 2: Override a few common params - still simple
-rag = TinyRAG.from_files(["doc.txt"], chunk_size=1024, top_k=10)
+rag = RAGlet.from_files(["doc.txt"], chunk_size=1024, top_k=10)
 
 # Level 3: Use preset - simple, but gets you closer to your use case
-rag = TinyRAG.from_files(["codebase/"], preset="codebase")
+rag = RAGlet.from_files(["codebase/"], preset="codebase")
 
 # That's it - API doesn't get more complex than this
 ```
@@ -180,18 +180,18 @@ When you need more control, configuration is where you go:
 
 ```python
 # Level 4: Config object - start customizing
-config = TinyRAGConfig(chunk_size=1024)
-rag = TinyRAG.from_files(["doc.txt"], config=config)
+config = RAGletConfig(chunk_size=1024)
+rag = RAGlet.from_files(["doc.txt"], config=config)
 
 # Level 5: Deep config - customize components
-config = TinyRAGConfig(
+config = RAGletConfig(
     chunking=ChunkingConfig(size=1024, strategy="semantic"),
     embeddings=EmbeddingConfig(model="all-mpnet-base-v2")
 )
-rag = TinyRAG.from_files(["doc.txt"], config=config)
+rag = RAGlet.from_files(["doc.txt"], config=config)
 
 # Level 6: Very deep config - customize everything
-config = TinyRAGConfig(
+config = RAGletConfig(
     chunking=ChunkingConfig(
         size=1024,
         overlap=100,
@@ -210,7 +210,7 @@ config = TinyRAGConfig(
         device="cuda",
         normalize_embeddings=True,
         show_progress=True,
-        cache_dir="~/.tinyrag/cache",
+        cache_dir="~/.raglet/cache",
         model_kwargs={"trust_remote_code": True}
     ),
     search=SearchConfig(
@@ -255,7 +255,7 @@ config = TinyRAGConfig(
     }
 )
 
-rag = TinyRAG.from_files(["doc.txt"], config=config)
+rag = RAGlet.from_files(["doc.txt"], config=config)
 ```
 
 **Configuration goes as deep as you need.** No limits, fully ergonomic.
@@ -265,30 +265,30 @@ rag = TinyRAG.from_files(["doc.txt"], config=config)
 **Pattern 1: Override Specific Component**
 ```python
 # Override just chunking - other components use defaults
-config = TinyRAGConfig(
+config = RAGletConfig(
     chunking=ChunkingConfig(size=1024, overlap=100)
 )
-rag = TinyRAG.from_files(["doc.txt"], config=config)
+rag = RAGlet.from_files(["doc.txt"], config=config)
 ```
 
 **Pattern 2: Start from Preset, Then Customize**
 ```python
 # Start with preset, then go deeper
-config = TinyRAGConfig.preset("codebase")
+config = RAGletConfig.preset("codebase")
 config.chunking.size = 2048  # Override preset
 config.embeddings.device = "cuda"  # Override preset
-rag = TinyRAG.from_files(["codebase/"], config=config)
+rag = RAGlet.from_files(["codebase/"], config=config)
 ```
 
 **Pattern 3: Load Base Config, Override Parts**
 ```python
 # Load team config, override for your use case
-base_config = TinyRAGConfig.load("team-config.yaml")
-my_config = TinyRAGConfig(
+base_config = RAGletConfig.load("team-config.yaml")
+my_config = RAGletConfig(
     extends=base_config,  # Inherit base
     chunking=ChunkingConfig(size=2048)  # Override chunking
 )
-rag = TinyRAG.from_files(["docs/"], config=my_config)
+rag = RAGlet.from_files(["docs/"], config=my_config)
 ```
 
 **Pattern 4: Compose Config Components**
@@ -298,8 +298,8 @@ chunking_for_code = ChunkingConfig(size=1024, strategy="sentence-aware")
 embeddings_fast = EmbeddingConfig(model="all-MiniLM-L6-v2", device="cpu")
 
 # Mix and match
-config1 = TinyRAGConfig(chunking=chunking_for_code, embeddings=embeddings_fast)
-config2 = TinyRAGConfig(chunking=chunking_for_code)  # Reuse chunking config
+config1 = RAGletConfig(chunking=chunking_for_code, embeddings=embeddings_fast)
+config2 = RAGletConfig(chunking=chunking_for_code)  # Reuse chunking config
 ```
 
 ### Deep Configuration via Dict
@@ -323,13 +323,13 @@ config_dict = {
         "rerank": True
     }
 }
-config = TinyRAGConfig.from_dict(config_dict)
-rag = TinyRAG.from_files(["doc.txt"], config=config)
+config = RAGletConfig.from_dict(config_dict)
+rag = RAGlet.from_files(["doc.txt"], config=config)
 ```
 
 ### Configuration File (YAML)
 ```yaml
-# .tinyrag.yaml
+# .raglet.yaml
 name: "codebase-config"
 description: "Configuration for codebase indexing"
 
@@ -365,10 +365,10 @@ custom_metadata:
 ### Configuration Inheritance
 ```python
 # Base config
-base_config = TinyRAGConfig.load("base.yaml")
+base_config = RAGletConfig.load("base.yaml")
 
 # Extend base config
-extended_config = TinyRAGConfig(
+extended_config = RAGletConfig(
     extends="base.yaml",  # Inherit from base
     chunking=ChunkingConfig(size=2048)  # Override chunking
 )
@@ -376,7 +376,7 @@ extended_config = TinyRAGConfig(
 
 ### Per-File-Type Configuration
 ```python
-config = TinyRAGConfig(
+config = RAGletConfig(
     file_processing=FileProcessingConfig(
         text_extraction={
             "pdf": {
@@ -426,7 +426,7 @@ class ChunkingConfig(BaseModel):
 
 ```python
 # Preset with overrides
-config = TinyRAGConfig.preset("codebase")
+config = RAGletConfig.preset("codebase")
 config.chunking.size = 2048  # Override preset
 config.embeddings.model = "all-mpnet-base-v2"  # Override preset
 ```
@@ -446,20 +446,20 @@ templates = {
     }
 }
 
-config = TinyRAGConfig.from_template("codebase")
+config = RAGletConfig.from_template("codebase")
 ```
 
 ### 4. Environment-Specific Configs
 
 ```python
 # Load environment-specific config
-config = TinyRAGConfig.load("config.dev.yaml")  # Development
-config = TinyRAGConfig.load("config.prod.yaml")  # Production
+config = RAGletConfig.load("config.dev.yaml")  # Development
+config = RAGletConfig.load("config.prod.yaml")  # Production
 
 # Or via environment variable
 import os
-env = os.getenv("TINYRAG_ENV", "dev")
-config = TinyRAGConfig.load(f"config.{env}.yaml")
+env = os.getenv("RAGLET_ENV", "dev")
+config = RAGletConfig.load(f"config.{env}.yaml")
 ```
 
 ### 5. Configuration Diff/Merge
@@ -479,7 +479,7 @@ merged = config1.merge(config2, strategy="deep")  # Deep merge nested dicts
 
 ### Phase 1: Nested Config Structure
 - [ ] Create nested config classes (ChunkingConfig, EmbeddingConfig, etc.)
-- [ ] Update TinyRAGConfig to use nested configs
+- [ ] Update RAGletConfig to use nested configs
 - [ ] Maintain backward compatibility (flat config still works)
 - [ ] Add validation to each config class
 
@@ -516,13 +516,13 @@ merged = config1.merge(config2, strategy="deep")  # Deep merge nested dicts
 **Old (Still Works):**
 ```python
 # Flat config
-config = TinyRAGConfig(chunk_size=512, embedding_model="all-MiniLM-L6-v2")
+config = RAGletConfig(chunk_size=512, embedding_model="all-MiniLM-L6-v2")
 ```
 
 **New (Nested):**
 ```python
 # Nested config
-config = TinyRAGConfig(
+config = RAGletConfig(
     chunking=ChunkingConfig(size=512),
     embeddings=EmbeddingConfig(model="all-MiniLM-L6-v2")
 )
@@ -531,7 +531,7 @@ config = TinyRAGConfig(
 **Auto-Conversion:**
 ```python
 # Automatically convert flat to nested
-config = TinyRAGConfig(chunk_size=512)  # Flat
+config = RAGletConfig(chunk_size=512)  # Flat
 # Internally converts to: config.chunking.size = 512
 ```
 
@@ -542,7 +542,7 @@ config = TinyRAGConfig(chunk_size=512)  # Flat
 ### YAML Example (Nested)
 
 ```yaml
-# .tinyrag.yaml
+# .raglet.yaml
 name: "my-config"
 version: "1.0.0"
 
@@ -610,8 +610,8 @@ custom_metadata:
 
 **The API is your happy path. Configuration is your escape hatch.**
 
-- **Happy path:** `TinyRAG.from_files(["doc.txt"])` - works for most
-- **Escape hatch:** `TinyRAG.from_files(["doc.txt"], config=deep_config)` - customize everything
+- **Happy path:** `RAGlet.from_files(["doc.txt"])` - works for most
+- **Escape hatch:** `RAGlet.from_files(["doc.txt"], config=deep_config)` - customize everything
 
 This keeps the API clean while giving power users full control.
 
@@ -656,10 +656,10 @@ This keeps the API clean while giving power users full control.
 
 ```python
 # Simple - just works
-rag = TinyRAG.from_files(["doc.txt"])
+rag = RAGlet.from_files(["doc.txt"])
 
 # Still simple - override what you need
-rag = TinyRAG.from_files(["doc.txt"], chunk_size=1024)
+rag = RAGlet.from_files(["doc.txt"], chunk_size=1024)
 
 # That's it - API doesn't get more complex
 ```
@@ -670,7 +670,7 @@ rag = TinyRAG.from_files(["doc.txt"], chunk_size=1024)
 
 ```python
 # When you need deep customization, use configuration
-config = TinyRAGConfig(
+config = RAGletConfig(
     chunking=ChunkingConfig(
         size=1024,
         overlap=100,
@@ -688,7 +688,7 @@ config = TinyRAGConfig(
         device="cuda",
         normalize_embeddings=True,
         show_progress=True,
-        cache_dir="~/.tinyrag/cache"
+        cache_dir="~/.raglet/cache"
     ),
     search=SearchConfig(
         default_top_k=10,
@@ -719,7 +719,7 @@ config = TinyRAGConfig(
     )
 )
 
-rag = TinyRAG.from_files(["doc.txt"], config=config)
+rag = RAGlet.from_files(["doc.txt"], config=config)
 ```
 
 **Configuration is where you go deep.** Every aspect is configurable, ergonomically.
@@ -751,9 +751,9 @@ rag = TinyRAG.from_files(["doc.txt"], config=config)
 ┌─────────────────────────────────────────────────────────┐
 │                    SHALLOW INTERFACE                    │
 │                                                         │
-│  TinyRAG.from_files(["doc.txt"])                       │
-│  TinyRAG.from_files(["doc.txt"], chunk_size=1024)     │
-│  TinyRAG.from_files(["doc.txt"], preset="codebase")    │
+│  RAGlet.from_files(["doc.txt"])                       │
+│  RAGlet.from_files(["doc.txt"], chunk_size=1024)     │
+│  RAGlet.from_files(["doc.txt"], preset="codebase")    │
 │                                                         │
 │  Simple. Clean. Just works.                           │
 └─────────────────────────────────────────────────────────┘
@@ -763,7 +763,7 @@ rag = TinyRAG.from_files(["doc.txt"], config=config)
 ┌─────────────────────────────────────────────────────────┐
 │                  DEEP CONFIGURATION                     │
 │                                                         │
-│  config = TinyRAGConfig(                               │
+│  config = RAGletConfig(                               │
 │      chunking=ChunkingConfig(...),                     │
 │      embeddings=EmbeddingConfig(...),                  │
 │      search=SearchConfig(...),                         │
@@ -790,7 +790,7 @@ rag = TinyRAG.from_files(["doc.txt"], config=config)
    - Start simple: `from_files(["doc.txt"])`
    - Override common params: `chunk_size=1024`
    - Use presets: `preset="codebase"`
-   - Go deep: `config=TinyRAGConfig(...)`
+   - Go deep: `config=RAGletConfig(...)`
 
 4. **Configuration is Portable**
    - Save configs to files

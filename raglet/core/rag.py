@@ -1,25 +1,25 @@
-"""TinyRAG main class."""
+"""RAGlet main class."""
 
 from typing import Optional
 
-from raglet.config.config import TinyRAGConfig
+from raglet.config.config import RAGletConfig
 from raglet.core.chunk import Chunk
 from raglet.embeddings.interfaces import EmbeddingGenerator
 from raglet.processing.interfaces import Chunker, DocumentExtractor
 from raglet.vector_store.interfaces import VectorStore
 
 
-class TinyRAG:
+class RAGlet:
     """Main RAG orchestrator class."""
 
     def __init__(
         self,
         chunks: list[Chunk],
-        config: TinyRAGConfig,
+        config: RAGletConfig,
         embedding_generator: Optional[EmbeddingGenerator] = None,
         vector_store: Optional[VectorStore] = None,
     ):
-        """Initialize TinyRAG.
+        """Initialize RAGlet.
 
         Args:
             chunks: List of chunks
@@ -63,9 +63,9 @@ class TinyRAG:
         chunker: Optional[Chunker] = None,
         embedding_generator: Optional[EmbeddingGenerator] = None,
         vector_store: Optional[VectorStore] = None,
-        config: Optional[TinyRAGConfig] = None,
-    ) -> "TinyRAG":
-        """Create TinyRAG from files.
+        config: Optional[RAGletConfig] = None,
+    ) -> "RAGlet":
+        """Create RAGlet from files.
 
         Full pipeline: Extract → Chunk → Embed → Index
 
@@ -78,14 +78,14 @@ class TinyRAG:
             config: Optional configuration (uses defaults if None)
 
         Returns:
-            TinyRAG instance with searchable index
+            RAGlet instance with searchable index
 
         Raises:
             FileNotFoundError: If any file doesn't exist
             ValueError: If configuration is invalid or extraction fails
         """
         if config is None:
-            config = TinyRAGConfig()
+            config = RAGletConfig()
 
         config.validate()
 

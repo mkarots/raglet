@@ -2,7 +2,7 @@
 
 import pytest
 
-from raglet.config.config import ChunkingConfig, TinyRAGConfig
+from raglet.config.config import ChunkingConfig, RAGletConfig
 
 
 class TestChunkingConfig:
@@ -58,12 +58,12 @@ class TestChunkingConfig:
             config.validate()
 
 
-class TestTinyRAGConfig:
-    """Test TinyRAGConfig."""
+class TestRAGletConfig:
+    """Test RAGletConfig."""
 
     def test_default_config(self):
         """Test default configuration."""
-        config = TinyRAGConfig()
+        config = RAGletConfig()
 
         assert isinstance(config.chunking, ChunkingConfig)
         assert config.chunking.size == 512
@@ -72,20 +72,20 @@ class TestTinyRAGConfig:
     def test_custom_chunking_config(self):
         """Test custom chunking configuration."""
         chunking_config = ChunkingConfig(size=1024)
-        config = TinyRAGConfig(chunking=chunking_config)
+        config = RAGletConfig(chunking=chunking_config)
 
         assert config.chunking.size == 1024
 
     def test_custom_metadata(self):
         """Test custom metadata."""
         metadata = {"project": "test", "version": "1.0"}
-        config = TinyRAGConfig(custom_metadata=metadata)
+        config = RAGletConfig(custom_metadata=metadata)
 
         assert config.custom_metadata == metadata
 
     def test_validate(self):
         """Test config validation."""
-        config = TinyRAGConfig()
+        config = RAGletConfig()
         config.validate()  # Should not raise
 
         # Test that invalid chunking config is caught

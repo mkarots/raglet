@@ -1,6 +1,6 @@
 # Problems
 
-This directory contains problem statements and context for tinyrag.
+This directory contains problem statements and context for raglet.
 
 ## Files
 

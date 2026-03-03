@@ -1,4 +1,4 @@
-# tinyrag Final Implementation Plan
+# raglet Final Implementation Plan
 
 **Status:** Approved for Implementation  
 **Date:** December 2024  
@@ -8,7 +8,7 @@
 
 ## Purpose of This Document
 
-This is the **definitive plan** for tinyrag. It consolidates all decisions, sets clear boundaries, and defines exactly what we're building. **No scope changes without updating this document.**
+This is the **definitive plan** for raglet. It consolidates all decisions, sets clear boundaries, and defines exactly what we're building. **No scope changes without updating this document.**
 
 ---
 
@@ -26,23 +26,23 @@ These are small (a few megabytes) but don't fit in a context window. They also d
 
 ### The Solution
 
-**tinyrag is portable memory.**
+**raglet is portable memory.**
 
-A Python library that creates a single `.tinyrag` file containing:
+A Python library that creates a single `.raglet` file containing:
 - Text chunks
 - Embeddings
 - Vector index
 - Metadata
 
-**No server. No API keys. No infrastructure. Just `pip install tinyrag`.**
+**No server. No API keys. No infrastructure. Just `pip install raglet`.**
 
 ### Core Principles (Non-Negotiable)
 
-1. **Portable** - One `.tinyrag` file. Save it, git commit it, email it, drag it to another machine
+1. **Portable** - One `.raglet` file. Save it, git commit it, email it, drag it to another machine
 2. **Small by design** - Built for workspace-scale problems (codebases, conversations, notes). **Not the internet**
-3. **Retrieval only** - tinyrag finds chunks. You decide what to do with them. **Bring your own LLM**
-4. **Open format** - The `.tinyrag` file is easily decodable. Embeddings are extractable. No lock-in
-5. **Zero infrastructure** - `pip install tinyrag`. That's it
+3. **Retrieval only** - raglet finds chunks. You decide what to do with them. **Bring your own LLM**
+4. **Open format** - The `.raglet` file is easily decodable. Embeddings are extractable. No lock-in
+5. **Zero infrastructure** - `pip install raglet`. That's it
 
 ---
 
@@ -52,16 +52,16 @@ A Python library that creates a single `.tinyrag` file containing:
 
 **Primary API:**
 ```python
-from tinyrag import TinyRAG
+from raglet import RAGlet
 
 # Create from files
-rag = TinyRAG.from_files(["doc.txt", "notes.md"])
+rag = RAGlet.from_files(["doc.txt", "notes.md"])
 
 # Save portable file
-rag.save("knowledge.tinyrag")
+rag.save("knowledge.raglet")
 
 # Load later
-rag = TinyRAG.load("knowledge.tinyrag")
+rag = RAGlet.load("knowledge.raglet")
 
 # Search
 results = rag.search("what is X?", top_k=5)
@@ -72,8 +72,8 @@ results = rag.search("what is X?", top_k=5)
 - ✅ Chunks text intelligently
 - ✅ Generates embeddings locally
 - ✅ Creates vector index (FAISS)
-- ✅ Saves to portable `.tinyrag` file
-- ✅ Loads `.tinyrag` files
+- ✅ Saves to portable `.raglet` file
+- ✅ Loads `.raglet` files
 - ✅ Searches and retrieves relevant chunks
 
 **What it does NOT do:**
@@ -94,7 +94,7 @@ results = rag.search("what is X?", top_k=5)
 - Text chunking (512 tokens, 50 overlap, sentence-aware)
 - Local embeddings (sentence-transformers, CPU-friendly)
 - Vector search (FAISS IndexFlatL2)
-- Portable file format (.tinyrag zip archive)
+- Portable file format (.raglet zip archive)
 - Save/load operations
 - Search/retrieval API
 - Configuration system (constructor params, config object, presets)
@@ -107,14 +107,14 @@ results = rag.search("what is X?", top_k=5)
 
 **Configuration:**
 - Constructor parameters with defaults
-- TinyRAGConfig object (reusable)
+- RAGletConfig object (reusable)
 - Presets ("codebase", "documents", "conversations")
 - Config file support (YAML) - optional
 - Precedence: Constructor > Config object > Config file > Env vars > Defaults
 
 **Agent Integration:**
-- Three Anthropic tools: create_tinyrag, search_tinyrag, get_tinyrag_info
-- Tool functions that wrap TinyRAG API
+- Three Anthropic tools: create_raglet, search_raglet, get_raglet_info
+- Tool functions that wrap RAGlet API
 - Zero infrastructure (library, not API)
 
 ### ❌ OUT OF SCOPE (MVP)
@@ -124,7 +124,7 @@ results = rag.search("what is X?", top_k=5)
 - ❌ React frontend or UI
 - ❌ LLM integration (OpenAI, Anthropic, etc.)
 - ❌ Real-time document updates
-- ❌ Incremental updates to .tinyrag files
+- ❌ Incremental updates to .raglet files
 - ❌ Streaming/chunked loading
 - ❌ Multiple embedding models per file
 - ❌ Custom chunker plugins
@@ -196,7 +196,7 @@ results = rag.search("what is X?", top_k=5)
 
 **Structure:**
 ```
-my_knowledge.tinyrag (zip archive)
+my_knowledge.raglet (zip archive)
 ├── metadata.json          # Version, config, creation date, chunk count
 ├── chunks.json            # Array of chunk objects with text, source, index, metadata
 ├── embeddings.npy         # NumPy float32 array (chunk_count, embedding_dim)
@@ -233,7 +233,7 @@ my_knowledge.tinyrag (zip archive)
 ### Core API
 
 ```python
-class TinyRAG:
+class RAGlet:
     @classmethod
     def from_files(
         cls,
@@ -242,19 +242,19 @@ class TinyRAG:
         chunk_overlap: int = 50,
         embedding_model: str = "all-MiniLM-L6-v2",
         default_top_k: int = 5,
-        config: Optional["TinyRAGConfig"] = None,
+        config: Optional["RAGletConfig"] = None,
         config_file: Optional[str] = None,
         preset: Optional[str] = None,
         **kwargs
-    ) -> "TinyRAG":
-        """Create TinyRAG from files."""
+    ) -> "RAGlet":
+        """Create RAGlet from files."""
     
     def save(self, path: str) -> None:
-        """Save to .tinyrag file."""
+        """Save to .raglet file."""
     
     @classmethod
-    def load(cls, path: str) -> "TinyRAG":
-        """Load from .tinyrag file."""
+    def load(cls, path: str) -> "RAGlet":
+        """Load from .raglet file."""
     
     def search(
         self,
@@ -272,7 +272,7 @@ class TinyRAG:
 
 ```python
 @dataclass
-class TinyRAGConfig:
+class RAGletConfig:
     chunk_size: int = 512
     chunk_overlap: int = 50
     chunk_strategy: str = "sentence-aware"
@@ -283,17 +283,17 @@ class TinyRAGConfig:
     custom_metadata: Optional[Dict[str, Any]] = None
     
     @classmethod
-    def preset(cls, name: str) -> "TinyRAGConfig":
+    def preset(cls, name: str) -> "RAGletConfig":
         """Get preset: 'codebase', 'documents', 'conversations'"""
     
     @classmethod
-    def load(cls, path: str) -> "TinyRAGConfig":
+    def load(cls, path: str) -> "RAGletConfig":
         """Load from YAML/JSON file."""
     
     def save(self, path: str) -> None:
         """Save to file."""
     
-    def merge(self, other: "TinyRAGConfig") -> "TinyRAGConfig":
+    def merge(self, other: "RAGletConfig") -> "RAGletConfig":
         """Merge with another config."""
     
     def validate(self) -> None:
@@ -315,25 +315,25 @@ class Chunk:
 ### Agent Tools API
 
 ```python
-# tinyrag/tools.py
+# raglet/tools.py
 
-def create_tinyrag(
+def create_raglet(
     file_paths: List[str],
     output_path: str,
     chunk_size: int = 512,
     chunk_overlap: int = 50
 ) -> Dict[str, Any]:
-    """Create .tinyrag file from documents."""
+    """Create .raglet file from documents."""
 
-def search_tinyrag(
+def search_raglet(
     file_path: str,
     query: str,
     top_k: int = 5
 ) -> Dict[str, Any]:
-    """Search a .tinyrag file."""
+    """Search a .raglet file."""
 
-def get_tinyrag_info(file_path: str) -> Dict[str, Any]:
-    """Get metadata about a .tinyrag file."""
+def get_raglet_info(file_path: str) -> Dict[str, Any]:
+    """Get metadata about a .raglet file."""
 ```
 
 ---
@@ -346,7 +346,7 @@ Following SOLID principles for clarity and maintainability:
 
 **Single Responsibility:**
 - Each class/module has one clear purpose
-- `TinyRAG` orchestrates (doesn't implement)
+- `RAGlet` orchestrates (doesn't implement)
 - `Chunker` chunks (doesn't extract or embed)
 - `EmbeddingGenerator` generates embeddings (doesn't search)
 - `VectorStore` stores/searches (doesn't generate embeddings)
@@ -366,14 +366,14 @@ Following SOLID principles for clarity and maintainability:
 
 **Dependency Inversion:**
 - Depend on abstractions (interfaces), not concretions
-- `TinyRAG` depends on interfaces, not concrete classes
+- `RAGlet` depends on interfaces, not concrete classes
 
 ### Component Structure
 
 ```
-tinyrag/
+raglet/
 ├── core/                    # Core domain logic
-│   ├── rag.py              # TinyRAG orchestrator
+│   ├── rag.py              # RAGlet orchestrator
 │   └── chunk.py             # Chunk domain model
 ├── processing/              # Document processing
 │   ├── extractors/          # File type extractors
@@ -386,8 +386,8 @@ tinyrag/
 │   ├── faiss_store.py      # FAISS implementation
 │   └── interfaces.py       # Vector store interfaces
 ├── storage/                 # File format & persistence
-│   ├── serializer.py       # .tinyrag serialization
-│   ├── deserializer.py     # .tinyrag deserialization
+│   ├── serializer.py       # .raglet serialization
+│   ├── deserializer.py     # .raglet deserialization
 │   └── interfaces.py       # Storage interfaces
 ├── config/                  # Configuration system
 │   ├── config.py           # Configuration classes
@@ -410,10 +410,10 @@ tinyrag/
 - Every aspect is configurable
 
 **Progressive Disclosure:**
-1. Simple: `TinyRAG.from_files(["doc.txt"])`
+1. Simple: `RAGlet.from_files(["doc.txt"])`
 2. Override: `chunk_size=1024`
 3. Preset: `preset="codebase"`
-4. Deep: `config=TinyRAGConfig(...)`
+4. Deep: `config=RAGletConfig(...)`
 
 ---
 
@@ -439,7 +439,7 @@ tinyrag/
 - [ ] Implement `core/chunk.py` - `Chunk` dataclass
   - [ ] text, source, index, metadata fields
   - [ ] to_dict() method
-- [ ] Create `core/rag.py` skeleton - `TinyRAG` class structure
+- [ ] Create `core/rag.py` skeleton - `RAGlet` class structure
   - [ ] Define constructor with dependencies (interfaces)
   - [ ] Define from_files() signature (not implementation yet)
 
@@ -463,7 +463,7 @@ tinyrag/
 **Configuration (Basic):**
 - [ ] Create `config/config.py` with basic structure
   - [ ] `ChunkingConfig` dataclass (size, overlap, strategy)
-  - [ ] `TinyRAGConfig` dataclass (holds ChunkingConfig)
+  - [ ] `RAGletConfig` dataclass (holds ChunkingConfig)
   - [ ] Basic validation methods
 
 **Testing:**
@@ -503,11 +503,11 @@ tinyrag/
 - [ ] Extend `config/config.py`
   - [ ] `EmbeddingConfig` dataclass (model, batch_size, device)
   - [ ] `SearchConfig` dataclass (default_top_k, similarity_threshold)
-  - [ ] Update `TinyRAGConfig` to include nested configs
+  - [ ] Update `RAGletConfig` to include nested configs
   - [ ] Validation for embedding and search configs
 
 **Core Integration:**
-- [ ] Complete `TinyRAG.from_files()` implementation
+- [ ] Complete `RAGlet.from_files()` implementation
   - [ ] Wire up extractors → chunker → embedding generator → vector store
   - [ ] Use interfaces (dependency injection)
   - [ ] Handle errors gracefully
@@ -516,7 +516,7 @@ tinyrag/
 - [ ] Unit tests for `SentenceTransformerGenerator`
 - [ ] Unit tests for `FAISSVectorStore`
 - [ ] Integration test: Extract → Chunk → Embed → Index flow
-- [ ] Mock tests for `TinyRAG.from_files()` with interfaces
+- [ ] Mock tests for `RAGlet.from_files()` with interfaces
 
 **Deliverable:**
 - ✅ Can generate embeddings from chunks
@@ -525,10 +525,10 @@ tinyrag/
 - ✅ Full pipeline working: files → chunks → embeddings → search
 
 ### Milestone 3: Portable File Format (Week 3)
-**Goal:** Save and load .tinyrag files
+**Goal:** Save and load .raglet files
 
 **Serialization:**
-- [ ] Implement `storage/serializer.py` - `TinyRAGSerializer`
+- [ ] Implement `storage/serializer.py` - `RAGletSerializer`
   - [ ] Implements `RAGSerializer` interface
   - [ ] Serialize chunks to JSON
   - [ ] Serialize embeddings to NumPy .npy format
@@ -538,42 +538,42 @@ tinyrag/
   - [ ] Version handling
 
 **Deserialization:**
-- [ ] Implement `storage/deserializer.py` - `TinyRAGDeserializer`
+- [ ] Implement `storage/deserializer.py` - `RAGletDeserializer`
   - [ ] Implements `RAGDeserializer` interface
   - [ ] Extract zip archive
   - [ ] Load chunks from JSON
   - [ ] Load embeddings from .npy
   - [ ] Load FAISS index from binary
-  - [ ] Reconstruct TinyRAG instance
+  - [ ] Reconstruct RAGlet instance
   - [ ] Version compatibility checks
 
 **Configuration (Deep):**
 - [ ] Implement deep configuration structure
   - [ ] Nested config classes (ChunkingConfig, EmbeddingConfig, SearchConfig, FileProcessingConfig)
-  - [ ] `TinyRAGConfig.from_dict()` for nested loading
-  - [ ] `TinyRAGConfig.to_dict()` for serialization
+  - [ ] `RAGletConfig.from_dict()` for nested loading
+  - [ ] `RAGletConfig.to_dict()` for serialization
   - [ ] Config validation for all nested configs
-  - [ ] Store full config in .tinyrag metadata
+  - [ ] Store full config in .raglet metadata
 
 **Core Methods:**
-- [ ] Implement `TinyRAG.save()` method
+- [ ] Implement `RAGlet.save()` method
   - [ ] Use `RAGSerializer` interface
   - [ ] Factory pattern for serializer
-- [ ] Implement `TinyRAG.load()` classmethod
+- [ ] Implement `RAGlet.load()` classmethod
   - [ ] Use `RAGDeserializer` interface
   - [ ] Factory pattern for deserializer
   - [ ] Reconstruct all dependencies
 
 **Testing:**
-- [ ] Unit tests for `TinyRAGSerializer`
-- [ ] Unit tests for `TinyRAGDeserializer`
+- [ ] Unit tests for `RAGletSerializer`
+- [ ] Unit tests for `RAGletDeserializer`
 - [ ] Integration test: Save → Load → Verify
 - [ ] Test version compatibility
 - [ ] Test config serialization/deserialization
 
 **Deliverable:**
-- ✅ Can save TinyRAG to .tinyrag file
-- ✅ Can load .tinyrag file to TinyRAG
+- ✅ Can save RAGlet to .raglet file
+- ✅ Can load .raglet file to RAGlet
 - ✅ File format is open and decodable
 - ✅ Config stored and restored correctly
 - ✅ Version handling works
@@ -633,9 +633,9 @@ tinyrag/
 **Deep Configuration:**
 - [ ] Complete nested configuration system
   - [ ] All nested config classes fully implemented
-  - [ ] `TinyRAGConfig.from_dict()` with nested support
-  - [ ] `TinyRAGConfig.load()` from YAML/JSON files
-  - [ ] `TinyRAGConfig.save()` to YAML/JSON files
+  - [ ] `RAGletConfig.from_dict()` with nested support
+  - [ ] `RAGletConfig.load()` from YAML/JSON files
+  - [ ] `RAGletConfig.save()` to YAML/JSON files
   - [ ] Config merging and inheritance
   - [ ] Preset system ("codebase", "documents", "conversations")
   - [ ] Schema validation (Pydantic or custom)
@@ -646,14 +646,14 @@ tinyrag/
   - [ ] Common params work with defaults
   - [ ] Config object is escape hatch for deep customization
 - [ ] Implement convenience methods
-  - [ ] `TinyRAG.search()` with query string (not just vector)
-  - [ ] `TinyRAG.get_all_chunks()` for context stuffing
+  - [ ] `RAGlet.search()` with query string (not just vector)
+  - [ ] `RAGlet.get_all_chunks()` for context stuffing
 
 **Agent Tools:**
 - [ ] Implement `tools/agent_tools.py`
-  - [ ] `create_tinyrag()` function
-  - [ ] `search_tinyrag()` function
-  - [ ] `get_tinyrag_info()` function
+  - [ ] `create_raglet()` function
+  - [ ] `search_raglet()` function
+  - [ ] `get_raglet_info()` function
   - [ ] Anthropic tool schemas (JSON)
   - [ ] Integration helpers
 
@@ -678,7 +678,7 @@ tinyrag/
   - [ ] All interfaces documented
   - [ ] All classes documented
   - [ ] Usage examples
-- [ ] Write .tinyrag format specification
+- [ ] Write .raglet format specification
   - [ ] File structure
   - [ ] Schema definitions
   - [ ] Version compatibility
@@ -711,8 +711,8 @@ tinyrag/
 ### MVP Must-Have
 
 **Functionality:**
-- ✅ Create `.tinyrag` file from 5 text files in <10 seconds
-- ✅ Load `.tinyrag` file and search in <1 second
+- ✅ Create `.raglet` file from 5 text files in <10 seconds
+- ✅ Load `.raglet` file and search in <1 second
 - ✅ Accurate retrieval (top-5 chunks are relevant to query)
 - ✅ File size reasonable (<10MB for 1000 chunks)
 - ✅ Works on macOS, Linux, Windows
@@ -808,19 +808,19 @@ tinyrag/
 - ❌ No authentication
 - ❌ No monitoring
 
-**If you need these things, tinyrag is not the right tool. Use LangChain, Pinecone, or other solutions.**
+**If you need these things, raglet is not the right tool. Use LangChain, Pinecone, or other solutions.**
 
 ---
 
 ## 10. Project Structure (SOLID Architecture)
 
 ```
-tinyrag/
-├── tinyrag/
+raglet/
+├── raglet/
 │   ├── __init__.py
 │   ├── core/                    # Core domain logic
 │   │   ├── __init__.py
-│   │   ├── rag.py              # TinyRAG orchestrator
+│   │   ├── rag.py              # RAGlet orchestrator
 │   │   └── chunk.py             # Chunk domain model
 │   ├── processing/              # Document processing
 │   │   ├── __init__.py
@@ -844,8 +844,8 @@ tinyrag/
 │   ├── storage/                 # File format & persistence
 │   │   ├── __init__.py
 │   │   ├── interfaces.py       # RAGSerializer, RAGDeserializer
-│   │   ├── serializer.py       # TinyRAGSerializer
-│   │   └── deserializer.py     # TinyRAGDeserializer
+│   │   ├── serializer.py       # RAGletSerializer
+│   │   └── deserializer.py     # RAGletDeserializer
 │   ├── config/                  # Configuration system
 │   │   ├── __init__.py
 │   │   ├── config.py           # Config classes (nested)
@@ -905,7 +905,7 @@ tinyrag/
 1. Set up Python package structure
 2. Implement document processor
 3. Implement chunker
-4. Create basic TinyRAG class
+4. Create basic RAGlet class
 
 ### Follow This Plan
 - No deviations without updating this document

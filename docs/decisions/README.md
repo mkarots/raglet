@@ -1,6 +1,6 @@
 # Decision Log
 
-This directory contains architectural and design decisions for tinyrag.
+This directory contains architectural and design decisions for raglet.
 
 ## Decisions
 
@@ -8,7 +8,7 @@ This directory contains architectural and design decisions for tinyrag.
 - [002: SOLID Architecture](002-solid-architecture.md) - SOLID principles and structure
 - [003: Shallow Interface, Deep Configuration](003-shallow-interface-deep-config.md) - API vs config philosophy
 - [004: Nested Configuration](004-nested-configuration.md) - Configuration structure
-- [005: Portable File Format](005-portable-file-format.md) - .tinyrag file format
+- [005: Portable File Format](005-portable-file-format.md) - .raglet file format
 - [006: Technology Stack](006-technology-stack.md) - Dependencies and tools
 - [007: Agent Tools](007-agent-tools.md) - Anthropic tool integration
 

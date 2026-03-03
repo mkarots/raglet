@@ -1,1 +1,1 @@
-"""Tests for tinyrag."""
+"""Tests for raglet."""

@@ -75,7 +75,7 @@ class SearchConfig:
 
 
 @dataclass
-class TinyRAGConfig:
+class RAGletConfig:
     """Main configuration class."""
 
     chunking: ChunkingConfig = field(default_factory=ChunkingConfig)

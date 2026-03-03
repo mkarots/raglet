@@ -1,6 +1,6 @@
 # Release Process
 
-This document describes how to release a new version of `tinyrag` to PyPI.
+This document describes how to release a new version of `raglet` to PyPI.
 
 ## Prerequisites
 
@@ -16,9 +16,9 @@ This document describes how to release a new version of `tinyrag` to PyPI.
 1. Go to https://pypi.org/manage/account/publishing/
 2. Click "Add a new pending publisher"
 3. Fill in:
-   - **PyPI project name**: `tinyrag`
+   - **PyPI project name**: `raglet`
    - **Owner**: Your GitHub username/organization
-   - **Repository name**: `tinyrag` (or your repo name)
+   - **Repository name**: `raglet` (or your repo name)
    - **Workflow filename**: `.github/workflows/release.yml`
    - **Environment name**: (leave empty for default)
 4. Click "Add"
@@ -41,13 +41,13 @@ This is the simplest and most automated method:
 
 1. **Update Version**:
    ```bash
-   # Edit tinyrag/__init__.py
+   # Edit raglet/__init__.py
    # Change: __version__ = "0.1.0"
    ```
 
 2. **Commit Version Change**:
    ```bash
-   git add tinyrag/__init__.py
+   git add raglet/__init__.py
    git commit -m "Bump version to 0.1.0"
    git push origin main  # or your default branch
    ```
@@ -61,7 +61,7 @@ This is the simplest and most automated method:
 4. **Automated Publishing**:
    - The `.github/workflows/release.yml` workflow will automatically:
      - Extract version from tag (`v0.1.0` → `0.1.0`)
-     - Verify version matches `tinyrag.__version__`
+     - Verify version matches `raglet.__version__`
      - Build the package (wheel and sdist)
      - Validate with `twine check`
      - Publish to PyPI
@@ -70,7 +70,7 @@ This is the simplest and most automated method:
 ### Option 2: GitHub Release
 
 1. **Update Version**:
-   - Update `__version__` in `tinyrag/__init__.py`
+   - Update `__version__` in `raglet/__init__.py`
    - Commit and push to your default branch
 
 2. **Create GitHub Release**:
@@ -90,21 +90,21 @@ For testing or when automation isn't available:
 
 1. **Update Version**:
    ```bash
-   # Edit tinyrag/__init__.py
+   # Edit raglet/__init__.py
    __version__ = "0.1.0"
    ```
 
 2. **Build Package**:
    ```bash
    make build
-   # Creates dist/tinyrag-0.1.0-py3-none-any.whl
-   # and dist/tinyrag-0.1.0.tar.gz
+   # Creates dist/raglet-0.1.0-py3-none-any.whl
+   # and dist/raglet-0.1.0.tar.gz
    ```
 
 3. **Check Package**:
    ```bash
    uv run twine check dist/*
-   # Should show: Checking dist/tinyrag-0.1.0-py3-none-any.whl: PASSED
+   # Should show: Checking dist/raglet-0.1.0-py3-none-any.whl: PASSED
    ```
 
 4. **Test on TestPyPI** (Recommended first):
@@ -118,7 +118,7 @@ For testing or when automation isn't available:
 
 5. **Verify TestPyPI Installation**:
    ```bash
-   pip install --index-url https://test.pypi.org/simple/ tinyrag
+   pip install --index-url https://test.pypi.org/simple/ raglet
    ```
 
 6. **Publish to PyPI**:
@@ -156,17 +156,17 @@ Follow [Semantic Versioning](https://semver.org/):
 - [ ] Type checking passes (`make type-check`)
 - [ ] Formatting check passes (`make format-check`)
 - [ ] Documentation is up to date (README.md)
-- [ ] Version number updated in `tinyrag/__init__.py`
+- [ ] Version number updated in `raglet/__init__.py`
 - [ ] Version matches semantic versioning
 - [ ] All changes committed and pushed
 - [ ] Release notes prepared (for GitHub release)
 
 ## Post-release
 
-- [ ] Verify package on PyPI: https://pypi.org/project/tinyrag/
+- [ ] Verify package on PyPI: https://pypi.org/project/raglet/
 - [ ] Check package metadata (description, classifiers, etc.)
-- [ ] Test installation: `pip install tinyrag`
-- [ ] Verify version: `python -c "import tinyrag; print(tinyrag.__version__)"`
+- [ ] Test installation: `pip install raglet`
+- [ ] Verify version: `python -c "import raglet; print(raglet.__version__)"`
 - [ ] Test basic functionality
 - [ ] Update any downstream dependencies
 - [ ] Announce release (if applicable)
@@ -177,10 +177,10 @@ Follow [Semantic Versioning](https://semver.org/):
 
 **Error**: Package version does not match tag version
 
-**Solution**: Ensure `tinyrag/__init__.py` has the correct version before pushing the tag:
+**Solution**: Ensure `raglet/__init__.py` has the correct version before pushing the tag:
 ```bash
 # Check current version
-python -c "import tinyrag; print(tinyrag.__version__)"
+python -c "import raglet; print(raglet.__version__)"
 # Should match your tag (without 'v' prefix)
 ```
 
@@ -223,8 +223,8 @@ git push origin v0.1.0     # Push new tag
 
 ```bash
 # Full release process (recommended)
-vim tinyrag/__init__.py  # Update version
-git add tinyrag/__init__.py
+vim raglet/__init__.py  # Update version
+git add raglet/__init__.py
 git commit -m "Bump version to X.Y.Z"
 git push origin main
 git tag vX.Y.Z
@@ -234,6 +234,6 @@ git push origin vX.Y.Z
 # GitHub → Actions → Release workflow
 
 # Verify release
-pip install tinyrag
-python -c "import tinyrag; print(tinyrag.__version__)"
+pip install raglet
+python -c "import raglet; print(raglet.__version__)"
 ```

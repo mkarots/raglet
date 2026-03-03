@@ -44,7 +44,7 @@
 ```
 raglet/
 ├── core/                    # Core domain logic
-│   ├── rag.py              # TinyRAG orchestrator (depends on interfaces)
+│   ├── rag.py              # RAGlet orchestrator (depends on interfaces)
 │   └── chunk.py             # Chunk domain model
 ├── processing/              # Document processing
 │   ├── interfaces.py       # DocumentExtractor, Chunker interfaces
@@ -58,8 +58,8 @@ raglet/
 │   └── faiss_store.py      # FAISSVectorStore implementation
 ├── storage/                 # File format & persistence
 │   ├── interfaces.py       # RAGSerializer, RAGDeserializer interfaces
-│   ├── serializer.py       # TinyRAGSerializer implementation
-│   └── deserializer.py     # TinyRAGDeserializer implementation
+│   ├── serializer.py       # RAGletSerializer implementation
+│   └── deserializer.py     # RAGletDeserializer implementation
 ├── config/                  # Configuration system
 │   ├── config.py           # Config classes (nested structure)
 │   ├── validators.py       # Config validation
@@ -70,7 +70,7 @@ raglet/
 
 ### Key Rules
 
-1. **TinyRAG depends on interfaces, NOT concrete classes**
+1. **RAGlet depends on interfaces, NOT concrete classes**
 2. **Each component has ONE responsibility**
 3. **New implementations extend interfaces, don't modify them**
 4. **Configuration is deep, API is shallow**
@@ -94,7 +94,7 @@ raglet/
 
 ### Naming Conventions
 
-- **Classes** - PascalCase: `TinyRAG`, `ChunkingConfig`
+- **Classes** - PascalCase: `RAGlet`, `ChunkingConfig`
 - **Functions/Methods** - snake_case: `from_files()`, `get_all_chunks()`
 - **Interfaces** - PascalCase with descriptive names: `DocumentExtractor`, `EmbeddingGenerator`
 - **Implementations** - Descriptive names: `SentenceTransformerGenerator`, `FAISSVectorStore`
@@ -313,20 +313,20 @@ What other options did we consider?
 **API stays simple:**
 ```python
 # Simple - just works
-rag = TinyRAG.from_files(["doc.txt"])
+rag = RAGlet.from_files(["doc.txt"])
 
 # Override common params - still simple
-rag = TinyRAG.from_files(["doc.txt"], chunk_size=1024)
+rag = RAGlet.from_files(["doc.txt"], chunk_size=1024)
 ```
 
 **Configuration goes deep:**
 ```python
 # Deep customization via config
-config = TinyRAGConfig(
+config = RAGletConfig(
     chunking=ChunkingConfig(size=1024, strategy="semantic"),
     embeddings=EmbeddingConfig(model="all-mpnet-base-v2")
 )
-rag = TinyRAG.from_files(["doc.txt"], config=config)
+rag = RAGlet.from_files(["doc.txt"], config=config)
 ```
 
 ### Rules
@@ -420,7 +420,7 @@ def create_extractor(file_path: str) -> DocumentExtractor:
 
 ### Dependency Injection
 
-TinyRAG receives dependencies, doesn't create them:
+RAGlet receives dependencies, doesn't create them:
 
 ```python
 # Good (Dependency Inversion)
@@ -462,12 +462,12 @@ from unittest.mock import Mock
 from raglet.processing.interfaces import DocumentExtractor
 
 def test_raglet_with_mock_extractor():
-    """Test TinyRAG with mocked extractor."""
+    """Test RAGlet with mocked extractor."""
     mock_extractor = Mock(spec=DocumentExtractor)
     mock_extractor.extract.return_value = "Test text"
     
     # Use mock in test
-    rag = TinyRAG.from_files(["test.txt"], document_extractor=mock_extractor)
+    rag = RAGlet.from_files(["test.txt"], document_extractor=mock_extractor)
 ```
 
 ### Integration Test Pattern
@@ -491,9 +491,9 @@ def test_extract_chunk_flow():
 ```python
 @pytest.mark.e2e
 def test_e2e_create_from_files():
-    """E2E test: Create TinyRAG from files."""
+    """E2E test: Create RAGlet from files."""
     # Test full pipeline
-    rag = TinyRAG.from_files(["doc1.txt", "doc2.md"])
+    rag = RAGlet.from_files(["doc1.txt", "doc2.md"])
     
     # Verify results
     assert len(rag.chunks) > 0
@@ -687,7 +687,7 @@ make ci             # Full CI pipeline
 
 1. **Violate SOLID**
    ```python
-   # Bad: TinyRAG creates concrete classes
+   # Bad: RAGlet creates concrete classes
    def __init__(self):
        self.embedder = SentenceTransformerGenerator()
    ```

@@ -5,7 +5,7 @@ import tempfile
 
 import pytest
 
-from raglet import TinyRAG
+from raglet import RAGlet
 
 
 @pytest.mark.e2e
@@ -13,7 +13,7 @@ class TestE2ESearch:
     """E2E tests for search functionality."""
 
     def test_e2e_create_and_search(self):
-        """E2E test: Create TinyRAG and search."""
+        """E2E test: Create RAGlet and search."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create test files
             file1 = os.path.join(tmpdir, "python.txt")
@@ -33,8 +33,8 @@ class TestE2ESearch:
                     "Neural networks are a popular ML technique."
                 )
 
-            # Create TinyRAG
-            rag = TinyRAG.from_files([file1, file2])
+            # Create RAGlet
+            rag = RAGlet.from_files([file1, file2])
 
             # Verify it was created
             assert len(rag.chunks) > 0
@@ -65,7 +65,7 @@ class TestE2ESearch:
             with open(file1, "w") as f:
                 f.write("Sentence one. " * 20)
 
-            rag = TinyRAG.from_files([file1])
+            rag = RAGlet.from_files([file1])
 
             # Search with top_k=1
             results = rag.search("sentence", top_k=1)
@@ -76,8 +76,8 @@ class TestE2ESearch:
             assert len(results) <= 5
 
     def test_e2e_empty_search(self):
-        """E2E test: Search on empty TinyRAG."""
-        rag = TinyRAG.from_files([])
+        """E2E test: Search on empty RAGlet."""
+        rag = RAGlet.from_files([])
 
         results = rag.search("anything")
         assert results == []

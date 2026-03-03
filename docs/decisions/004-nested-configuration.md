@@ -9,7 +9,7 @@ Need ergonomic configuration that can go deep without API complexity.
 
 ## Decision
 
-Use nested configuration classes: `ChunkingConfig`, `EmbeddingConfig`, `SearchConfig`, `FileProcessingConfig` within `TinyRAGConfig`.
+Use nested configuration classes: `ChunkingConfig`, `EmbeddingConfig`, `SearchConfig`, `FileProcessingConfig` within `RAGletConfig`.
 
 ## Rationale
 
@@ -29,7 +29,7 @@ Use nested configuration classes: `ChunkingConfig`, `EmbeddingConfig`, `SearchCo
 ## Structure
 
 ```python
-TinyRAGConfig
+RAGletConfig
 ├── chunking: ChunkingConfig
 ├── embeddings: EmbeddingConfig
 ├── search: SearchConfig

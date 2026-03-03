@@ -1,4 +1,4 @@
-# Configuration Exploration for tinyrag
+# Configuration Exploration for raglet
 
 ## What Needs Configuration?
 
@@ -44,7 +44,7 @@
 
 **Example:**
 ```python
-rag = TinyRAG.from_files(
+rag = RAGlet.from_files(
     files=["doc1.txt", "doc2.md"],
     chunk_size=512,
     chunk_overlap=50,
@@ -67,16 +67,16 @@ rag = TinyRAG.from_files(
 
 **Example:**
 ```python
-from tinyrag import TinyRAG, TinyRAGConfig
+from raglet import RAGlet, RAGletConfig
 
-config = TinyRAGConfig(
+config = RAGletConfig(
     chunk_size=512,
     chunk_overlap=50,
     embedding_model="all-MiniLM-L6-v2",
     default_top_k=5
 )
 
-rag = TinyRAG.from_files(files=["doc1.txt"], config=config)
+rag = RAGlet.from_files(files=["doc1.txt"], config=config)
 ```
 
 ### Option 3: Config File (Persistent)
@@ -94,7 +94,7 @@ rag = TinyRAG.from_files(files=["doc1.txt"], config=config)
 
 **Example:**
 ```yaml
-# tinyrag.yaml
+# raglet.yaml
 chunking:
   size: 512
   overlap: 50
@@ -110,7 +110,7 @@ search:
 ```
 
 ```python
-rag = TinyRAG.from_files(files=["doc1.txt"], config_file="tinyrag.yaml")
+rag = RAGlet.from_files(files=["doc1.txt"], config_file="raglet.yaml")
 ```
 
 ### Option 4: Builder Pattern (Fluent)
@@ -126,7 +126,7 @@ rag = TinyRAG.from_files(files=["doc1.txt"], config_file="tinyrag.yaml")
 
 **Example:**
 ```python
-rag = (TinyRAG.builder()
+rag = (RAGlet.builder()
     .with_files(["doc1.txt", "doc2.md"])
     .chunk_size(512)
     .chunk_overlap(50)
@@ -148,12 +148,12 @@ rag = (TinyRAG.builder()
 
 **Example:**
 ```bash
-export TINYRAG_CHUNK_SIZE=512
-export TINYRAG_EMBEDDING_MODEL=all-MiniLM-L6-v2
+export RAGLET_CHUNK_SIZE=512
+export RAGLET_EMBEDDING_MODEL=all-MiniLM-L6-v2
 ```
 
 ```python
-rag = TinyRAG.from_files(files=["doc1.txt"])  # Reads from env
+rag = RAGlet.from_files(files=["doc1.txt"])  # Reads from env
 ```
 
 ### Option 6: Hybrid Approach (Recommended)
@@ -167,19 +167,19 @@ rag = TinyRAG.from_files(files=["doc1.txt"])  # Reads from env
 **Example:**
 ```python
 # Simple case - just use defaults
-rag = TinyRAG.from_files(["doc1.txt"])
+rag = RAGlet.from_files(["doc1.txt"])
 
 # Advanced case - use config object
-config = TinyRAGConfig(chunk_size=1024, embedding_model="all-mpnet-base-v2")
-rag = TinyRAG.from_files(["doc1.txt"], config=config)
+config = RAGletConfig(chunk_size=1024, embedding_model="all-mpnet-base-v2")
+rag = RAGlet.from_files(["doc1.txt"], config=config)
 
 # Project-level - use config file
-rag = TinyRAG.from_files(["doc1.txt"], config_file=".tinyrag.yaml")
+rag = RAGlet.from_files(["doc1.txt"], config_file=".raglet.yaml")
 
 # Override with constructor
-rag = TinyRAG.from_files(
+rag = RAGlet.from_files(
     ["doc1.txt"],
-    config_file=".tinyrag.yaml",
+    config_file=".raglet.yaml",
     chunk_size=256  # Override file config
 )
 ```
@@ -192,9 +192,9 @@ rag = TinyRAG.from_files(
 4. **Environment variables** (deployment defaults)
 5. **Library defaults** (lowest priority)
 
-## Configuration Storage in .tinyrag Files
+## Configuration Storage in .raglet Files
 
-### Should config be stored in .tinyrag?
+### Should config be stored in .raglet?
 
 **Yes** - Store config used to create the file:
 - Enables reproducibility
@@ -233,35 +233,35 @@ rag = TinyRAG.from_files(
 **Need:** Fast, one-off usage
 **Best:** Constructor parameters or defaults
 ```python
-rag = TinyRAG.from_files(["notes.txt"])
+rag = RAGlet.from_files(["notes.txt"])
 ```
 
 ### Scenario 2: Project with Team
 **Need:** Consistent config across team
 **Best:** Config file in repo
 ```python
-rag = TinyRAG.from_files(["docs/"], config_file=".tinyrag.yaml")
+rag = RAGlet.from_files(["docs/"], config_file=".raglet.yaml")
 ```
 
 ### Scenario 3: Agent/Tool Integration
 **Need:** Programmatic, reusable configs
 **Best:** Config object
 ```python
-codebase_config = TinyRAGConfig(
+codebase_config = RAGletConfig(
     chunk_size=1024,
     embedding_model="all-mpnet-base-v2"
 )
-rag = TinyRAG.from_files(files, config=codebase_config)
+rag = RAGlet.from_files(files, config=codebase_config)
 ```
 
 ### Scenario 4: Production Deployment
 **Need:** Environment-specific overrides
 **Best:** Environment variables + config file
 ```bash
-export TINYRAG_EMBEDDING_MODEL=all-mpnet-base-v2
+export RAGLET_EMBEDDING_MODEL=all-mpnet-base-v2
 ```
 ```python
-rag = TinyRAG.from_files(files, config_file="config.yaml")
+rag = RAGlet.from_files(files, config_file="config.yaml")
 ```
 
 ### Scenario 5: Experimentation
@@ -269,8 +269,8 @@ rag = TinyRAG.from_files(files, config_file="config.yaml")
 **Best:** Config object with easy changes
 ```python
 for chunk_size in [256, 512, 1024]:
-    config = TinyRAGConfig(chunk_size=chunk_size)
-    rag = TinyRAG.from_files(files, config=config)
+    config = RAGletConfig(chunk_size=chunk_size)
+    rag = RAGlet.from_files(files, config=config)
     # Test retrieval quality
 ```
 
@@ -279,10 +279,10 @@ for chunk_size in [256, 512, 1024]:
 ### Core API (Simple)
 ```python
 # Defaults - opinionated, just works
-rag = TinyRAG.from_files(["doc1.txt"])
+rag = RAGlet.from_files(["doc1.txt"])
 
 # Override specific params
-rag = TinyRAG.from_files(
+rag = RAGlet.from_files(
     ["doc1.txt"],
     chunk_size=1024,
     top_k=10
@@ -291,10 +291,10 @@ rag = TinyRAG.from_files(
 
 ### Advanced API (Structured)
 ```python
-from tinyrag import TinyRAG, TinyRAGConfig
+from raglet import RAGlet, RAGletConfig
 
 # Create reusable config
-config = TinyRAGConfig(
+config = RAGletConfig(
     chunk_size=512,
     chunk_overlap=50,
     embedding_model="all-MiniLM-L6-v2",
@@ -302,19 +302,19 @@ config = TinyRAGConfig(
 )
 
 # Use config
-rag = TinyRAG.from_files(["doc1.txt"], config=config)
+rag = RAGlet.from_files(["doc1.txt"], config=config)
 
 # Save config for reuse
 config.save("my_config.yaml")
 
 # Load config
-config = TinyRAGConfig.load("my_config.yaml")
+config = RAGletConfig.load("my_config.yaml")
 ```
 
 ### Config File Support
 ```python
 # Use project config file
-rag = TinyRAG.from_files(["doc1.txt"], config_file=".tinyrag.yaml")
+rag = RAGlet.from_files(["doc1.txt"], config_file=".raglet.yaml")
 
 # Config file format (YAML)
 chunking:
@@ -331,15 +331,15 @@ search:
 ### Environment Variables (Optional)
 ```bash
 # Set defaults via env vars
-export TINYRAG_CHUNK_SIZE=512
-export TINYRAG_EMBEDDING_MODEL=all-MiniLM-L6-v2
+export RAGLET_CHUNK_SIZE=512
+export RAGLET_EMBEDDING_MODEL=all-MiniLM-L6-v2
 ```
 
 ## Implementation Structure
 
 ```
-tinyrag/
-├── config.py              # TinyRAGConfig class
+raglet/
+├── config.py              # RAGletConfig class
 ├── defaults.py           # Default values
 ├── validators.py         # Config validation
 └── presets.py            # Predefined configs
@@ -349,7 +349,7 @@ tinyrag/
 
 ```python
 @dataclass
-class TinyRAGConfig:
+class RAGletConfig:
     # Chunking
     chunk_size: int = 512
     chunk_overlap: int = 50
@@ -372,7 +372,7 @@ class TinyRAGConfig:
     custom_metadata: Dict[str, Any] = None
     
     @classmethod
-    def from_file(cls, path: str) -> "TinyRAGConfig":
+    def from_file(cls, path: str) -> "RAGletConfig":
         """Load config from YAML/JSON file."""
         
     def save(self, path: str) -> None:
@@ -381,7 +381,7 @@ class TinyRAGConfig:
     def validate(self) -> None:
         """Validate config values."""
         
-    def merge(self, other: "TinyRAGConfig") -> "TinyRAGConfig":
+    def merge(self, other: "RAGletConfig") -> "RAGletConfig":
         """Merge with another config (for overrides)."""
 ```
 
@@ -390,7 +390,7 @@ class TinyRAGConfig:
 1. **Should config be required or optional?**
    - Recommendation: Optional, with good defaults
 
-2. **Should config be stored in .tinyrag files?**
+2. **Should config be stored in .raglet files?**
    - Recommendation: Yes, for reproducibility
 
 3. **What file format for config files?**
@@ -409,22 +409,22 @@ class TinyRAGConfig:
 
 ```python
 # Codebase preset
-codebase_config = TinyRAGConfig.preset("codebase")
+codebase_config = RAGletConfig.preset("codebase")
 # chunk_size=1024, sentence-aware, all-mpnet-base-v2
 
 # Documents preset
-docs_config = TinyRAGConfig.preset("documents")
+docs_config = RAGletConfig.preset("documents")
 # chunk_size=512, all-MiniLM-L6-v2
 
 # Conversations preset
-chat_config = TinyRAGConfig.preset("conversations")
+chat_config = RAGletConfig.preset("conversations")
 # chunk_size=256, preserve message boundaries
 ```
 
 ## Next Steps
 
 1. Decide on primary pattern (recommend: Hybrid)
-2. Design TinyRAGConfig class
+2. Design RAGletConfig class
 3. Implement config file loading (YAML)
 4. Add preset configurations
 5. Document configuration options

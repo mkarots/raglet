@@ -31,10 +31,10 @@ raglet is **portable memory**. It takes small context and turns it into a single
 ## Quick Start
 
 ```python
-from raglet import TinyRAG
+from raglet import RAGlet
 
 # Create from files
-rag = TinyRAG.from_files(["doc.txt", "notes.md"])
+rag = RAGlet.from_files(["doc.txt", "notes.md"])
 
 # Search for relevant chunks
 results = rag.search("what is X?", top_k=5)

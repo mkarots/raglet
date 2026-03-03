@@ -1,4 +1,4 @@
-# Decision 005: Portable .tinyrag File Format
+# Decision 005: Portable .raglet File Format
 
 **Date:** December 2024  
 **Status:** Accepted
@@ -9,7 +9,7 @@ Need portable knowledge bases that can be saved, shared, and loaded anywhere.
 
 ## Decision
 
-Single `.tinyrag` file as zip archive containing chunks, embeddings, index, and metadata.
+Single `.raglet` file as zip archive containing chunks, embeddings, index, and metadata.
 
 ## Rationale
 
@@ -29,7 +29,7 @@ Single `.tinyrag` file as zip archive containing chunks, embeddings, index, and 
 ## Format
 
 ```
-my_knowledge.tinyrag (zip)
+my_knowledge.raglet (zip)
 ├── metadata.json    # Config, version, creation date
 ├── chunks.json      # Chunk objects
 ├── embeddings.npy   # NumPy array
