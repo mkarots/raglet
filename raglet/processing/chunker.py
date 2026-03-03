@@ -3,9 +3,9 @@
 import re
 from typing import Any
 
-from tinyrag.config.config import ChunkingConfig
-from tinyrag.core.chunk import Chunk
-from tinyrag.processing.interfaces import Chunker
+from raglet.config.config import ChunkingConfig
+from raglet.core.chunk import Chunk
+from raglet.processing.interfaces import Chunker
 
 
 class SentenceAwareChunker(Chunker):

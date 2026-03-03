@@ -2,8 +2,8 @@
 
 from typing import Optional
 
-from tinyrag.processing.extractors import MarkdownExtractor, TextExtractor
-from tinyrag.processing.interfaces import DocumentExtractor
+from raglet.processing.extractors import MarkdownExtractor, TextExtractor
+from raglet.processing.interfaces import DocumentExtractor
 
 
 def create_extractor(

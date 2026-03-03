@@ -1,8 +1,8 @@
 <div align="center">
-  <img src="assets/logo.png" alt="tinyrag logo" width="600">
+  <img src="assets/logo.png" alt="raglet logo" width="600">
 </div>
 
-# tinyrag
+# raglet
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -10,7 +10,7 @@
 
 **Portable memory for small text corpora.**
 
-tinyrag creates searchable `.tinyrag` files from your documents. No infrastructure, no servers, no API keys. Just `pip install tinyrag`.
+raglet creates searchable `.raglet` files from your documents. No infrastructure, no servers, no API keys. Just `pip install raglet`.
 
 ## The Problem
 
@@ -24,14 +24,14 @@ These are small (a few megabytes) but don't fit in a context window. They also d
 
 ## The Solution
 
-tinyrag is **portable memory**. It takes small context and turns it into a single `.tinyrag` file that you can save, share, commit, or carry around. Load it anywhere, search it instantly, and get retrieval-ready context for any LLM or tool.
+raglet is **portable memory**. It takes small context and turns it into a single `.raglet` file that you can save, share, commit, or carry around. Load it anywhere, search it instantly, and get retrieval-ready context for any LLM or tool.
 
 **No server. No API keys. No infrastructure. Just a Python object and a file.**
 
 ## Quick Start
 
 ```python
-from tinyrag import TinyRAG
+from raglet import TinyRAG
 
 # Create from files
 rag = TinyRAG.from_files(["doc.txt", "notes.md"])
@@ -43,13 +43,13 @@ results = rag.search("what is X?", top_k=5)
 chunks = rag.get_all_chunks()
 
 # Save portable file (coming in Milestone 3)
-# rag.save("knowledge.tinyrag")
+# rag.save("knowledge.raglet")
 ```
 
 ## Installation
 
 ```bash
-pip install tinyrag
+pip install raglet
 ```
 
 For development (requires [uv](https://github.com/astral-sh/uv)):
@@ -73,17 +73,17 @@ make install-dev
 - ✅ SOLID architecture with clear interfaces
 
 **Coming Soon:**
-- 🔜 Portable `.tinyrag` file format
+- 🔜 Portable `.raglet` file format
 - 🔜 Save/load operations
 - 🔜 PDF, HTML, DOCX support
 
 ## Principles
 
-1. **Portable** - One `.tinyrag` file. Save it, git commit it, email it
+1. **Portable** - One `.raglet` file. Save it, git commit it, email it
 2. **Small by design** - Workspace-scale (codebases, conversations, notes). Not the internet
-3. **Retrieval only** - tinyrag finds chunks. You decide what to do with them. Bring your own LLM
-4. **Open format** - The `.tinyrag` file is easily decodable. Embeddings are extractable. No lock-in
-5. **Zero infrastructure** - `pip install tinyrag`. That's it
+3. **Retrieval only** - raglet finds chunks. You decide what to do with them. Bring your own LLM
+4. **Open format** - The `.raglet` file is easily decodable. Embeddings are extractable. No lock-in
+5. **Zero infrastructure** - `pip install raglet`. That's it
 
 ## Development
 
@@ -101,7 +101,7 @@ make ci              # Full CI pipeline
 
 ## Architecture
 
-tinyrag follows SOLID principles with clear separation of concerns:
+raglet follows SOLID principles with clear separation of concerns:
 
 - **core/** - Domain models and orchestrator
 - **processing/** - Document extraction and chunking
@@ -121,7 +121,7 @@ See [plans/FINAL_PLAN.md](plans/FINAL_PLAN.md) for roadmap.
 
 ## Documentation
 
-- [Problem Statement](docs/problems/00-problem-statement.md) - Why tinyrag exists
+- [Problem Statement](docs/problems/00-problem-statement.md) - Why raglet exists
 - [Architecture Decisions](docs/decisions/) - All architectural decisions
 - [Implementation Plan](plans/FINAL_PLAN.md) - Roadmap and milestones
 - [Agent Instructions](CLAUDE.md) - For contributors

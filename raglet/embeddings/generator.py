@@ -3,9 +3,9 @@
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from tinyrag.config.config import EmbeddingConfig
-from tinyrag.core.chunk import Chunk
-from tinyrag.embeddings.interfaces import EmbeddingGenerator
+from raglet.config.config import EmbeddingConfig
+from raglet.core.chunk import Chunk
+from raglet.embeddings.interfaces import EmbeddingGenerator
 
 
 class SentenceTransformerGenerator(EmbeddingGenerator):

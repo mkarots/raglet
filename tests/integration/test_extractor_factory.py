@@ -5,9 +5,9 @@ import tempfile
 
 import pytest
 
-from tinyrag.processing.extractor_factory import create_extractor
-from tinyrag.processing.extractors.markdown_extractor import MarkdownExtractor
-from tinyrag.processing.extractors.text_extractor import TextExtractor
+from raglet.processing.extractor_factory import create_extractor
+from raglet.processing.extractors.markdown_extractor import MarkdownExtractor
+from raglet.processing.extractors.text_extractor import TextExtractor
 
 
 @pytest.mark.integration

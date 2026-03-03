@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-from tinyrag.processing.interfaces import DocumentExtractor
+from raglet.processing.interfaces import DocumentExtractor
 
 
 class TextExtractor(DocumentExtractor):

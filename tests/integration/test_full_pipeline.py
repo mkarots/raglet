@@ -5,8 +5,8 @@ import tempfile
 
 import pytest
 
-from tinyrag import TinyRAG
-from tinyrag.config.config import TinyRAGConfig
+from raglet import TinyRAG
+from raglet.config.config import TinyRAGConfig
 
 
 @pytest.mark.integration

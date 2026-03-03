@@ -1,5 +1,5 @@
 """Configuration system."""
 
-from tinyrag.config.config import ChunkingConfig, TinyRAGConfig
+from raglet.config.config import ChunkingConfig, TinyRAGConfig
 
 __all__ = ["ChunkingConfig", "TinyRAGConfig"]

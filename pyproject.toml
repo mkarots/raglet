@@ -3,17 +3,17 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tinyrag"
+name = "raglet"
 version = "0.1.0"
-description = "Portable memory for small text corpora - create searchable .tinyrag files"
+description = "Portable memory for small text corpora - create searchable .raglet files"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
-    {name = "tinyrag contributors", email = "michael.karotsieris@gmail.com"}
+    {name = "raglet contributors", email = "michael.karotsieris@gmail.com"}
 ]
 maintainers = [
-    {name = "tinyrag contributors", email = "michael.karotsieris@gmail.com"}
+    {name = "raglet contributors", email = "michael.karotsieris@gmail.com"}
 ]
 keywords = ["rag", "embeddings", "vector-search", "retrieval", "nlp", "semantic-search"]
 classifiers = [
@@ -61,23 +61,23 @@ config = [
     "pyyaml>=6.0",
 ]
 all = [
-    "tinyrag[dev,pdf,html,docx,config]",
+    "raglet[dev,pdf,html,docx,config]",
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/tinyrag"
-Documentation = "https://github.com/yourusername/tinyrag/docs"
-Repository = "https://github.com/yourusername/tinyrag"
-Issues = "https://github.com/yourusername/tinyrag/issues"
+Homepage = "https://github.com/yourusername/raglet"
+Documentation = "https://github.com/yourusername/raglet/docs"
+Repository = "https://github.com/yourusername/raglet"
+Issues = "https://github.com/yourusername/raglet/issues"
 
 [tool.setuptools]
-packages = ["tinyrag"]
+packages = ["raglet"]
 
 [tool.setuptools.package-data]
-tinyrag = ["py.typed"]
+raglet = ["py.typed"]
 
 [tool.setuptools.dynamic]
-version = {attr = "tinyrag.__version__"}
+version = {attr = "raglet.__version__"}
 
 [tool.black]
 line-length = 100
@@ -133,7 +133,7 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
-    "--cov=tinyrag",
+    "--cov=raglet",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",
@@ -146,7 +146,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["tinyrag"]
+source = ["raglet"]
 omit = [
     "*/tests/*",
     "*/test_*.py",

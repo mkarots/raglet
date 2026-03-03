@@ -5,7 +5,7 @@ import tempfile
 
 import pytest
 
-from tinyrag.processing.extractors import MarkdownExtractor, TextExtractor
+from raglet.processing.extractors import MarkdownExtractor, TextExtractor
 
 
 class TestTextExtractor:

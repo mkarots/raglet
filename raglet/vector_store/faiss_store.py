@@ -3,9 +3,9 @@
 import faiss
 import numpy as np
 
-from tinyrag.config.config import SearchConfig
-from tinyrag.core.chunk import Chunk
-from tinyrag.vector_store.interfaces import VectorStore
+from raglet.config.config import SearchConfig
+from raglet.core.chunk import Chunk
+from raglet.vector_store.interfaces import VectorStore
 
 
 class FAISSVectorStore(VectorStore):

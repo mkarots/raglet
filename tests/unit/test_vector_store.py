@@ -3,9 +3,9 @@
 import numpy as np
 import pytest
 
-from tinyrag.config.config import SearchConfig
-from tinyrag.core.chunk import Chunk
-from tinyrag.vector_store.faiss_store import FAISSVectorStore
+from raglet.config.config import SearchConfig
+from raglet.core.chunk import Chunk
+from raglet.vector_store.faiss_store import FAISSVectorStore
 
 
 @pytest.mark.unit

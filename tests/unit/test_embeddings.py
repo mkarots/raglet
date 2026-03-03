@@ -3,9 +3,9 @@
 import numpy as np
 import pytest
 
-from tinyrag.config.config import EmbeddingConfig
-from tinyrag.core.chunk import Chunk
-from tinyrag.embeddings.generator import SentenceTransformerGenerator
+from raglet.config.config import EmbeddingConfig
+from raglet.core.chunk import Chunk
+from raglet.embeddings.generator import SentenceTransformerGenerator
 
 
 @pytest.mark.unit

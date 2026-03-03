@@ -1,26 +1,26 @@
-# CLAUDE.md - Agent Instructions for tinyrag
+# CLAUDE.md - Agent Instructions for raglet
 
-**This file contains instructions for AI agents working on the tinyrag codebase.**
+**This file contains instructions for AI agents working on the raglet codebase.**
 
 ---
 
 ## 1. Project Overview
 
-### What is tinyrag?
+### What is raglet?
 
-**tinyrag** is a Python library that creates portable `.tinyrag` files - single-file knowledge bases containing chunks, embeddings, and metadata. It's retrieval-only (no LLM), zero infrastructure, and designed for workspace-scale problems.
+**raglet** is a Python library that creates portable `.raglet` files - single-file knowledge bases containing chunks, embeddings, and metadata. It's retrieval-only (no LLM), zero infrastructure, and designed for workspace-scale problems.
 
 ### Core Principles (NON-NEGOTIABLE)
 
-1. **Portable** - One `.tinyrag` file. Save it, git commit it, email it
+1. **Portable** - One `.raglet` file. Save it, git commit it, email it
 2. **Small by design** - Workspace-scale (codebases, conversations, notes). **Not the internet**
-3. **Retrieval only** - tinyrag finds chunks. You decide what to do with them. **Bring your own LLM**
-4. **Open format** - The `.tinyrag` file is easily decodable. Embeddings are extractable. No lock-in
-5. **Zero infrastructure** - `pip install tinyrag`. That's it
+3. **Retrieval only** - raglet finds chunks. You decide what to do with them. **Bring your own LLM**
+4. **Open format** - The `.raglet` file is easily decodable. Embeddings are extractable. No lock-in
+5. **Zero infrastructure** - `pip install raglet`. That's it
 
 ### Key Documents
 
-- **`docs/problems/00-problem-statement.md`** - Why tinyrag exists
+- **`docs/problems/00-problem-statement.md`** - Why raglet exists
 - **`docs/decisions/`** - All architectural decisions (ADR format)
 - **`plans/FINAL_PLAN.md`** - Implementation plan and roadmap
 - **`docs/proposals/ARCHITECTURE.md`** - SOLID architecture details
@@ -42,7 +42,7 @@
 ### Component Structure
 
 ```
-tinyrag/
+raglet/
 ├── core/                    # Core domain logic
 │   ├── rag.py              # TinyRAG orchestrator (depends on interfaces)
 │   └── chunk.py             # Chunk domain model
@@ -110,8 +110,8 @@ from typing import List, Optional
 import numpy as np
 
 # Local imports
-from tinyrag.core.chunk import Chunk
-from tinyrag.processing.interfaces import DocumentExtractor
+from raglet.core.chunk import Chunk
+from raglet.processing.interfaces import DocumentExtractor
 ```
 
 ### Error Handling
@@ -125,7 +125,7 @@ from tinyrag.processing.interfaces import DocumentExtractor
 ```python
 # processing/extractors/pdf_extractor.py
 
-from tinyrag.processing.interfaces import DocumentExtractor
+from raglet.processing.interfaces import DocumentExtractor
 
 class PDFExtractor(DocumentExtractor):
     """Extracts text from PDF files."""
@@ -191,7 +191,7 @@ Use pytest markers:
 # tests/unit/test_pdf_extractor.py
 
 import pytest
-from tinyrag.processing.extractors.pdf_extractor import PDFExtractor
+from raglet.processing.extractors.pdf_extractor import PDFExtractor
 
 @pytest.mark.unit
 class TestPDFExtractor:
@@ -459,9 +459,9 @@ def validate(self) -> None:
 
 ```python
 from unittest.mock import Mock
-from tinyrag.processing.interfaces import DocumentExtractor
+from raglet.processing.interfaces import DocumentExtractor
 
-def test_tinyrag_with_mock_extractor():
+def test_raglet_with_mock_extractor():
     """Test TinyRAG with mocked extractor."""
     mock_extractor = Mock(spec=DocumentExtractor)
     mock_extractor.extract.return_value = "Test text"
@@ -589,7 +589,7 @@ make ci             # Full CI pipeline
 ### ✅ IN SCOPE
 
 - Python library (not web service)
-- Portable `.tinyrag` files
+- Portable `.raglet` files
 - Document processing (.txt, .md, .pdf, .html, .docx)
 - Local embeddings (sentence-transformers)
 - FAISS vector search
@@ -614,13 +614,13 @@ make ci             # Full CI pipeline
 ## 14. Quick Reference
 
 ### Project Structure
-- **Core logic:** `tinyrag/core/`
-- **Processing:** `tinyrag/processing/`
-- **Embeddings:** `tinyrag/embeddings/`
-- **Vector store:** `tinyrag/vector_store/`
-- **Storage:** `tinyrag/storage/`
-- **Config:** `tinyrag/config/`
-- **Tools:** `tinyrag/tools/`
+- **Core logic:** `raglet/core/`
+- **Processing:** `raglet/processing/`
+- **Embeddings:** `raglet/embeddings/`
+- **Vector store:** `raglet/vector_store/`
+- **Storage:** `raglet/storage/`
+- **Config:** `raglet/config/`
+- **Tools:** `raglet/tools/`
 
 ### Key Files
 - **Plan:** `plans/FINAL_PLAN.md`
@@ -701,7 +701,7 @@ make ci             # Full CI pipeline
 
 3. **Add LLM integration**
    ```python
-   # Bad: tinyrag is retrieval-only
+   # Bad: raglet is retrieval-only
    def answer(self, query: str):
        return llm.generate(query)
    ```
@@ -768,7 +768,7 @@ make ci             # Full CI pipeline
 
 1. **SOLID principles** - Always
 2. **Shallow interface, deep configuration** - API simple, config deep
-3. **Portable files** - `.tinyrag` format is core
+3. **Portable files** - `.raglet` format is core
 4. **Zero infrastructure** - Everything local
 5. **Retrieval only** - No LLM integration
 6. **Test everything** - Unit, integration, E2E
@@ -792,4 +792,4 @@ make ci             # Full CI pipeline
 
 ---
 
-**Remember: tinyrag is portable memory. Keep it simple, keep it local, keep it focused.**
+**Remember: raglet is portable memory. Keep it simple, keep it local, keep it focused.**

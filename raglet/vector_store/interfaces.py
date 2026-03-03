@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from tinyrag.core.chunk import Chunk
+from raglet.core.chunk import Chunk
 
 
 class VectorStore(ABC):

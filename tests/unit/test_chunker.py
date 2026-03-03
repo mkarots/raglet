@@ -1,7 +1,7 @@
 """Unit tests for chunker."""
 
-from tinyrag.config.config import ChunkingConfig
-from tinyrag.processing.chunker import SentenceAwareChunker
+from raglet.config.config import ChunkingConfig
+from raglet.processing.chunker import SentenceAwareChunker
 
 
 class TestSentenceAwareChunker:

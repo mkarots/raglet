@@ -1,7 +1,7 @@
 include README.md
 include LICENSE
 include pyproject.toml
-recursive-include tinyrag *.py
-recursive-include tinyrag py.typed
+recursive-include raglet *.py
+recursive-include raglet py.typed
 global-exclude __pycache__
 global-exclude *.py[co]

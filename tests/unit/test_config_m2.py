@@ -2,7 +2,7 @@
 
 import pytest
 
-from tinyrag.config.config import (
+from raglet.config.config import (
     EmbeddingConfig,
     SearchConfig,
     TinyRAGConfig,

@@ -75,25 +75,25 @@ test-e2e: check-uv
 	uv run pytest -m e2e
 
 lint: check-uv
-	uv run ruff check tinyrag tests
+	uv run ruff check raglet tests
 
 format: check-uv
-	uv run black tinyrag tests
-	uv run ruff check --fix tinyrag tests
+	uv run black raglet tests
+	uv run ruff check --fix raglet tests
 
 format-check: check-uv
-	uv run black --check tinyrag tests
-	uv run ruff check tinyrag tests
+	uv run black --check raglet tests
+	uv run ruff check raglet tests
 
 type-check: check-uv
-	uv run mypy tinyrag
+	uv run mypy raglet
 
 coverage: check-uv
-	uv run pytest --cov=tinyrag --cov-report=html --cov-report=term-missing
+	uv run pytest --cov=raglet --cov-report=html --cov-report=term-missing
 	@echo "Coverage report generated in htmlcov/index.html"
 
 coverage-ci: check-uv
-	uv run pytest --cov=tinyrag --cov-report=xml --cov-report=term-missing
+	uv run pytest --cov=raglet --cov-report=xml --cov-report=term-missing
 
 clean:
 	rm -rf build/

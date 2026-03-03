@@ -5,7 +5,7 @@ import tempfile
 
 import pytest
 
-from tinyrag import TinyRAG
+from raglet import TinyRAG
 
 
 @pytest.mark.e2e

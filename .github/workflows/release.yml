@@ -52,7 +52,7 @@ jobs:
     
     - name: Verify version matches package
       run: |
-        PACKAGE_VERSION=$(uv run python -c "import tinyrag; print(tinyrag.__version__)")
+        PACKAGE_VERSION=$(uv run python -c "import raglet; print(raglet.__version__)")
         TAG_VERSION="${{ steps.get_version.outputs.version }}"
         if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
           echo "Error: Package version ($PACKAGE_VERSION) does not match tag version ($TAG_VERSION)"

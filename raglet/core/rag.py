@@ -2,11 +2,11 @@
 
 from typing import Optional
 
-from tinyrag.config.config import TinyRAGConfig
-from tinyrag.core.chunk import Chunk
-from tinyrag.embeddings.interfaces import EmbeddingGenerator
-from tinyrag.processing.interfaces import Chunker, DocumentExtractor
-from tinyrag.vector_store.interfaces import VectorStore
+from raglet.config.config import TinyRAGConfig
+from raglet.core.chunk import Chunk
+from raglet.embeddings.interfaces import EmbeddingGenerator
+from raglet.processing.interfaces import Chunker, DocumentExtractor
+from raglet.vector_store.interfaces import VectorStore
 
 
 class TinyRAG:
@@ -32,7 +32,7 @@ class TinyRAG:
 
         # Create default implementations if not provided
         if embedding_generator is None:
-            from tinyrag.embeddings.generator import SentenceTransformerGenerator
+            from raglet.embeddings.generator import SentenceTransformerGenerator
 
             self.embedding_generator: EmbeddingGenerator = SentenceTransformerGenerator(
                 config.embedding
@@ -41,7 +41,7 @@ class TinyRAG:
             self.embedding_generator = embedding_generator
 
         if vector_store is None:
-            from tinyrag.vector_store.faiss_store import FAISSVectorStore
+            from raglet.vector_store.faiss_store import FAISSVectorStore
 
             self.vector_store: VectorStore = FAISSVectorStore(
                 embedding_dim=self.embedding_generator.get_dimension(),
@@ -90,8 +90,8 @@ class TinyRAG:
         config.validate()
 
         # Step 1: Extract text from files
-        from tinyrag.processing.chunker import SentenceAwareChunker
-        from tinyrag.processing.extractor_factory import create_extractor
+        from raglet.processing.chunker import SentenceAwareChunker
+        from raglet.processing.extractor_factory import create_extractor
 
         all_chunks = []
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from tinyrag.config.config import ChunkingConfig, TinyRAGConfig
+from raglet.config.config import ChunkingConfig, TinyRAGConfig
 
 
 class TestChunkingConfig:

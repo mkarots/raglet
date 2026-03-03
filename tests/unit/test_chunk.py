@@ -1,6 +1,6 @@
 """Unit tests for Chunk model."""
 
-from tinyrag.core.chunk import Chunk
+from raglet.core.chunk import Chunk
 
 
 class TestChunk:

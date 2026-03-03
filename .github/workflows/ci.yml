@@ -76,7 +76,7 @@ jobs:
     - name: Check distribution
       run: |
         uv pip install --system dist/*.whl
-        python -c "import tinyrag; print(tinyrag.__version__)"
+        python -c "import raglet; print(raglet.__version__)"
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
