@@ -13,6 +13,7 @@ Milestone 2 implements the core retrieval capabilities: generating embeddings fr
 **Key Deliverables:**
 - ✅ Generate embeddings from chunks using sentence-transformers
 - ✅ Store vectors in FAISS index
+- ✅ Store vectors in FAISS index
 - ✅ Search vectors and retrieve relevant chunks
 - ✅ Full pipeline working: files → chunks → embeddings → search
 

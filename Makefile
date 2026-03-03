@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-unit test-integration test-e2e lint format format-check type-check coverage coverage-ci clean build dist ci venv check-uv
+.PHONY: help install install-dev test test-unit test-integration test-e2e lint format format-check type-check coverage coverage-ci clean build dist publish publish-test ci venv check-uv
 
 
 # Check if uv is available (checks at runtime, works even if uv was installed after Makefile was parsed)
@@ -26,6 +26,8 @@ help:
 	@echo "  clean           - Clean build artifacts"
 	@echo "  build           - Build package"
 	@echo "  dist            - Create distribution"
+	@echo "  publish-test    - Publish to TestPyPI (requires twine)"
+	@echo "  publish         - Publish to PyPI (requires twine)"
 	@echo "  ci              - Run full CI pipeline"
 	@echo ""
 	@if command -v uv >/dev/null 2>&1; then \
@@ -111,6 +113,14 @@ build: clean check-uv
 
 dist: build
 	@echo "Distribution created in dist/"
+
+publish-test: build check-uv
+	@echo "Publishing to TestPyPI..."
+	uv run twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+publish: build check-uv
+	@echo "Publishing to PyPI..."
+	uv run twine upload dist/*
 
 ci: lint type-check test
 	@echo "CI pipeline completed successfully"
