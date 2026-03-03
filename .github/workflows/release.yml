@@ -43,9 +43,8 @@ jobs:
     
     - name: Verify version matches package
       run: |
-        python -m pip install --upgrade pip
-        pip install -e .
-        PACKAGE_VERSION=$(python -c "import tinyrag; print(tinyrag.__version__)")
+        uv pip install -e .
+        PACKAGE_VERSION=$(uv run python -c "import tinyrag; print(tinyrag.__version__)")
         TAG_VERSION="${{ steps.get_version.outputs.version }}"
         if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
           echo "Error: Package version ($PACKAGE_VERSION) does not match tag version ($TAG_VERSION)"
@@ -58,9 +57,9 @@ jobs:
       with:
         version: "latest"
     
-    - name: Install build dependencies
+    - name: Install dependencies with dev extras
       run: |
-        uv pip install --system build twine
+        uv sync --extra dev
     
     - name: Build package
       run: |
@@ -68,7 +67,6 @@ jobs:
     
     - name: Check package
       run: |
-        uv pip install --system twine
         uv run twine check dist/*
     
     - name: Publish to PyPI
