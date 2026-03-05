@@ -213,10 +213,11 @@ class RAGlet:
         incremental: bool = False,
         storage_backend: Optional["StorageBackend"] = None,
     ) -> None:
-        """Save RAGlet to storage (directory or SQLite file).
+        """Save RAGlet to storage (directory, SQLite file, or zip archive).
 
         Auto-detects format:
         - If path ends with .sqlite or .db → SQLite format
+        - If path ends with .zip → Zip format (read-only, no incremental updates)
         - If path is directory → Directory format
         - Otherwise → Directory format (default)
 
@@ -238,10 +239,11 @@ class RAGlet:
         file_path: str,
         storage_backend: Optional["StorageBackend"] = None,
     ) -> "RAGlet":
-        """Load RAGlet from storage (directory or SQLite file).
+        """Load RAGlet from storage (directory, SQLite file, or zip archive).
 
         Auto-detects format:
         - If path ends with .sqlite or .db → SQLite format
+        - If path ends with .zip → Zip format
         - If path is directory → Directory format
         - Otherwise → Directory format (default)
 
@@ -375,9 +377,11 @@ class RAGlet:
 
         Detection logic:
         1. If path has .sqlite or .db extension → SQLite format
-        2. If path exists and is a directory → Directory format
-        3. If path exists and is a file with SQLite magic bytes → SQLite format
-        4. Otherwise → Directory format (default)
+        2. If path has .zip extension → Zip format
+        3. If path exists and is a directory → Directory format
+        4. If path exists and is a file with SQLite magic bytes → SQLite format
+        5. If path exists and is a file with Zip magic bytes (PK) → Zip format
+        6. Otherwise → Directory format (default)
 
         Args:
             file_path: Path to file or directory
@@ -393,13 +397,19 @@ class RAGlet:
 
             return SQLiteStorageBackend()
 
+        # Zip format (by extension)
+        if path.suffix.lower() == ".zip":
+            from raglet.storage.zip_backend import ZipStorageBackend
+
+            return ZipStorageBackend()
+
         # Directory format (if exists and is directory)
         if path.exists() and path.is_dir():
             from raglet.storage.directory_backend import DirectoryStorageBackend
 
             return DirectoryStorageBackend()
 
-        # Check if existing file is SQLite (magic bytes)
+        # Check if existing file is SQLite or Zip (magic bytes)
         if path.exists() and path.is_file():
             try:
                 with open(path, "rb") as f:
@@ -408,6 +418,10 @@ class RAGlet:
                         from raglet.storage.sqlite_backend import SQLiteStorageBackend
 
                         return SQLiteStorageBackend()
+                    elif header.startswith(b"PK"):  # Zip magic bytes
+                        from raglet.storage.zip_backend import ZipStorageBackend
+
+                        return ZipStorageBackend()
             except Exception:
                 pass
 

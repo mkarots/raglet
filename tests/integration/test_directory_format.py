@@ -103,7 +103,7 @@ class TestDirectoryFormat:
             results = loaded.search("Python", top_k=1)
 
             assert len(results) > 0
-            assert "Python" in results[0].text.lower()
+            assert "python" in results[0].text.lower()
 
     def test_auto_detection_directory(self):
         """Test auto-detection works for directory paths."""

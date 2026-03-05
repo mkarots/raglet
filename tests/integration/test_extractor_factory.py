@@ -35,9 +35,10 @@ class TestExtractorFactory:
         assert isinstance(extractor, TextExtractor)
 
     def test_factory_unknown_file(self):
-        """Test factory raises error for unknown file types."""
-        with pytest.raises(ValueError, match="No extractor found"):
-            create_extractor("test.unknown")
+        """Test factory falls back to TextExtractor for unknown file types."""
+        # Unknown file types should fall back to TextExtractor
+        extractor = create_extractor("test.unknown")
+        assert isinstance(extractor, TextExtractor)
 
     def test_factory_extracts_correctly(self):
         """Test factory-created extractor works correctly."""

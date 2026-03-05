@@ -55,7 +55,7 @@ class TestCLIE2E:
             results = loaded.search("Python", top_k=1)
 
             assert len(results) > 0
-            assert "Python" in results[0].text.lower()
+            assert "python" in results[0].text.lower()
 
     def test_cli_incremental_add_workflow(self):
         """Test incremental add workflow."""

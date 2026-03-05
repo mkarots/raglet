@@ -234,7 +234,17 @@ class SQLiteStorageBackend(StorageBackend):
             IOError: If file operations fail
         """
         file_path_obj = Path(file_path)
-        file_path_obj.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Ensure parent directory exists
+        if file_path_obj.parent != file_path_obj:  # Not root directory
+            file_path_obj.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Check if path is actually a directory (shouldn't happen, but safety check)
+        if file_path_obj.exists() and file_path_obj.is_dir():
+            raise ValueError(
+                f"Cannot save SQLite file to directory path: {file_path}. "
+                f"Use DirectoryStorageBackend for directories."
+            )
 
         conn = sqlite3.connect(str(file_path))
         try:

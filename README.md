@@ -53,10 +53,12 @@ rag = RAGlet.load(".raglet/")
 
 ### Docker CLI
 
-**The ultimate flex:** Run raglet instantly against any workspace:
+**Use as a standalone tool:** Run raglet instantly against any workspace:
 
 ```bash
 # Build knowledge base from workspace
+# -v mounts your local project directory into the container at /workspace
+# --workspace tells raglet where to find files inside the container
 docker run -v /path/to/project:/workspace mkarots/raglet \
   --workspace /workspace build
 
@@ -79,9 +81,20 @@ docker run -v /path/to/project:/workspace mkarots/raglet \
 # Export to zip for sharing
 docker run -v /path/to/project:/workspace mkarots/raglet \
   --workspace /workspace export --output knowledge.zip
+
+# Use zip file directly (no need to extract)
+# First, export to zip (if you haven't already):
+docker run -v /path/to/project:/workspace mkarots/raglet \
+  --workspace /workspace export --output knowledge.zip
+
+# Then query using the zip file:
+docker run -v /path/to/project:/workspace mkarots/raglet \
+  --workspace /workspace query "your query" --kb-name knowledge.zip
 ```
 
 **Knowledge base lives in `.raglet/` directory** - mount your workspace and it just works!
+
+**Note:** If you encounter errors with zip files, make sure you're using the latest Docker image. Rebuild with `make docker-build` or pull the latest from Docker Hub.
 
 ## Installation
 

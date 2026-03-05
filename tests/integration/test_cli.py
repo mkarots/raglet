@@ -65,7 +65,7 @@ class TestCLI:
             results = loaded.search("Python", top_k=1)
 
             assert len(results) > 0
-            assert "Python" in results[0].text.lower()
+            assert "python" in results[0].text.lower()
 
     def test_add_command_adds_files(self):
         """Test 'add' command adds files incrementally."""
@@ -176,9 +176,10 @@ class TestCLI:
             (workspace / "test.txt").write_text("Python is a programming language. " * 100)
 
             # Build with custom config
+            from raglet.config.config import ChunkingConfig, EmbeddingConfig
             config = RAGletConfig(
-                chunking={"size": 100, "overlap": 10},
-                embedding={"model": "all-MiniLM-L6-v2"},
+                chunking=ChunkingConfig(size=100, overlap=10),
+                embedding=EmbeddingConfig(model="all-MiniLM-L6-v2"),
             )
             raglet = RAGlet.from_files([str(workspace / "test.txt")], config=config)
             raglet.save(str(kb_path))
@@ -254,9 +255,9 @@ class TestCLI:
 
             # Create files
             (workspace / "include.txt").write_text("Include this.")
-            (workspace / ".git" / "ignore.txt").mkdir(parents=True)
+            (workspace / ".git").mkdir(parents=True, exist_ok=True)
             (workspace / ".git" / "ignore.txt").write_text("Ignore this.")
-            (workspace / "__pycache__" / "ignore.pyc").mkdir(parents=True)
+            (workspace / "__pycache__").mkdir(parents=True, exist_ok=True)
             (workspace / "__pycache__" / "ignore.pyc").write_bytes(b"binary")
 
             # Build (should only include include.txt)

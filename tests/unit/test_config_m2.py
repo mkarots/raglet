@@ -19,7 +19,7 @@ class TestEmbeddingConfig:
         assert config.model == "all-MiniLM-L6-v2"
         assert config.batch_size == 32
         assert config.device == "cpu"
-        assert config.normalize is False
+        assert config.normalize is True  # Default changed to True for cosine similarity
 
     def test_validation_success(self):
         """Test successful validation."""

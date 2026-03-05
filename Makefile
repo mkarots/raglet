@@ -143,7 +143,7 @@ ci: lint type-check test
 
 # Docker commands
 DOCKER_IMAGE := mkarots/raglet
-VERSION := $(shell grep '^version =' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+VERSION := $(shell grep '^version =' pyproject.toml | head -1 | sed 's/version = "\([^"]*\)".*/\1/')
 
 docker-build: check-uv
 	@echo "Building Docker image: $(DOCKER_IMAGE):$(VERSION)"

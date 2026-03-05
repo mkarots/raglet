@@ -1,11 +1,13 @@
 """Embedding generator implementation using sentence-transformers."""
 
+import sys
+import logging
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
 from raglet.config.config import EmbeddingConfig
 from raglet.core.chunk import Chunk
 from raglet.embeddings.interfaces import EmbeddingGenerator
+
 
 
 class SentenceTransformerGenerator(EmbeddingGenerator):
@@ -22,6 +24,23 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
         """
         self.config = config
         self.config.validate()
+
+        # Lazy import sentence-transformers (heavy dependency)
+        # This import is deferred until actually needed to avoid slow startup
+        try:
+            from sentence_transformers import SentenceTransformer
+        except ImportError as e:
+            raise ImportError(
+                "sentence-transformers is required but not installed. "
+                "Install with: pip install sentence-transformers"
+            ) from e
+
+        # Warn about loading time
+        logging.warning(
+            f"⚠️  Loading embedding model '{config.model}'... "
+            "This may take a few seconds on first use.",
+            file=sys.stderr,
+        )
 
         try:
             self.model = SentenceTransformer(config.model, device=config.device)

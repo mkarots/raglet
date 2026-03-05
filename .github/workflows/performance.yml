@@ -1,0 +1,134 @@
+name: Performance Tests
+
+on:
+  workflow_dispatch:  # Allow manual trigger on any branch
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'  # Run on version tags like v0.1.0
+    paths:
+      - 'raglet/**'
+      - 'experiments/performance_test.py'
+      - '.github/workflows/performance.yml'
+
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      
+      - name: Install dependencies
+        run: |
+          uv pip install --system -e ".[dev]"
+      
+      - name: Run performance tests
+        id: performance
+        run: |
+          cd experiments
+          python performance_test.py \
+            --sizes 100 1000 10000 \
+            --formats sqlite directory \
+            --output performance_results.json
+        continue-on-error: true
+      
+      - name: Upload performance results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results-${{ matrix.python-version }}
+          path: |
+            experiments/performance_results.json
+            experiments/test_data/
+          retention-days: 30
+      
+      - name: Parse and display results
+        if: always()
+        run: |
+          if [ -f experiments/performance_results.json ]; then
+            echo "## Performance Test Results" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Summary" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            python3 << 'EOF'
+          import json
+          import sys
+          
+          try:
+              with open('experiments/performance_results.json', 'r') as f:
+                  results = json.load(f)
+              
+              if not results:
+                  print("No results found.")
+                  sys.exit(0)
+              
+              # Group by format
+              formats = {}
+              for r in results:
+                  fmt = r.get('format', 'unknown')
+                  if fmt not in formats:
+                      formats[fmt] = []
+                  formats[fmt].append(r)
+              
+              # Print summary table
+              print(f"{'Chunks':>10} | {'Save (ms)':>12} | {'Load (ms)':>12} | {'Incremental (ms)':>18} | {'Search (ms)':>12} | {'Size (MB)':>12}")
+              print("-" * 90)
+              
+              for fmt in sorted(formats.keys()):
+                  print(f"\n{fmt.upper()} Format:")
+                  for r in sorted(formats[fmt], key=lambda x: x['chunk_count']):
+                      print(
+                          f"{r['chunk_count']:>10,} | "
+                          f"{r['save_time_ms']:>12.2f} | "
+                          f"{r['load_time_ms']:>12.2f} | "
+                          f"{r['incremental_save_time_ms']:>18.2f} | "
+                          f"{r['search_time_ms']:>12.2f} | "
+                          f"{r['file_size_bytes']/1024/1024:>12.2f}"
+                      )
+              
+              # Comparison if multiple formats
+              if len(formats) > 1:
+                  print("\n\nComparison:")
+                  sizes = sorted(set(r['chunk_count'] for r in results))
+                  for size in sizes:
+                      size_results = [r for r in results if r['chunk_count'] == size]
+                      sqlite = next((r for r in size_results if r.get('format') == 'sqlite'), None)
+                      directory = next((r for r in size_results if r.get('format') == 'directory'), None)
+                      
+                      if sqlite and directory:
+                          print(f"\n{size:,} chunks:")
+                          print(f"  Save:      SQLite {sqlite['save_time_ms']:.2f}ms vs Directory {directory['save_time_ms']:.2f}ms")
+                          print(f"  Load:      SQLite {sqlite['load_time_ms']:.2f}ms vs Directory {directory['load_time_ms']:.2f}ms")
+                          print(f"  Incremental: SQLite {sqlite['incremental_save_time_ms']:.2f}ms vs Directory {directory['incremental_save_time_ms']:.2f}ms")
+                          print(f"  Search:    SQLite {sqlite['search_time_ms']:.2f}ms vs Directory {directory['search_time_ms']:.2f}ms")
+                          print(f"  Size:      SQLite {sqlite['file_size_bytes']/1024/1024:.2f}MB vs Directory {directory['file_size_bytes']/1024/1024:.2f}MB")
+          
+          except Exception as e:
+              print(f"Error parsing results: {e}")
+              import traceback
+              traceback.print_exc()
+              sys.exit(1)
+          EOF
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Performance Test Failed" >> $GITHUB_STEP_SUMMARY
+            echo "No results file generated." >> $GITHUB_STEP_SUMMARY
+          fi

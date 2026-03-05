@@ -22,6 +22,8 @@ wheels/
 test_data/
 scripts/
 experiments/
+docs/proposals/
+docs/plans/
 
 # Virtual environments
 venv/
