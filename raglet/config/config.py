@@ -29,7 +29,7 @@ class ChunkingConfig:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary.
-        
+
         Returns:
             Dictionary representation of config
         """
@@ -42,10 +42,10 @@ class ChunkingConfig:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ChunkingConfig":
         """Create config from dictionary.
-        
+
         Args:
             data: Dictionary with config values
-            
+
         Returns:
             ChunkingConfig instance
         """
@@ -80,7 +80,7 @@ class EmbeddingConfig:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary.
-        
+
         Returns:
             Dictionary representation of config
         """
@@ -94,10 +94,10 @@ class EmbeddingConfig:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "EmbeddingConfig":
         """Create config from dictionary.
-        
+
         Args:
             data: Dictionary with config values
-            
+
         Returns:
             EmbeddingConfig instance
         """
@@ -129,11 +129,13 @@ class SearchConfig:
             if not 0.0 <= self.similarity_threshold <= 1.0:
                 raise ValueError("similarity_threshold must be between 0.0 and 1.0")
         if self.index_type != "flat_ip":
-            raise ValueError(f"Invalid index_type: {self.index_type}. Only 'flat_ip' (cosine similarity) is supported.")
+            raise ValueError(
+                f"Invalid index_type: {self.index_type}. Only 'flat_ip' (cosine similarity) is supported."
+            )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary.
-        
+
         Returns:
             Dictionary representation of config
         """
@@ -148,10 +150,10 @@ class SearchConfig:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "SearchConfig":
         """Create config from dictionary.
-        
+
         Args:
             data: Dictionary with config values
-            
+
         Returns:
             SearchConfig instance
         """
@@ -183,7 +185,7 @@ class RAGletConfig:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary.
-        
+
         Returns:
             Dictionary representation of config with nested configs
         """
@@ -197,17 +199,17 @@ class RAGletConfig:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "RAGletConfig":
         """Create config from dictionary.
-        
+
         Args:
             data: Dictionary with config values (may include nested configs)
-            
+
         Returns:
             RAGletConfig instance
         """
         chunking_data = data.get("chunking", {})
         embedding_data = data.get("embedding", {})
         search_data = data.get("search", {})
-        
+
         return cls(
             chunking=ChunkingConfig.from_dict(chunking_data),
             embedding=EmbeddingConfig.from_dict(embedding_data),

@@ -37,7 +37,7 @@ class DirectoryStorageBackend(StorageBackend):
             IOError: If file operations fail
         """
         dir_path = Path(file_path)
-        
+
         # Create directory if needed
         dir_path.mkdir(parents=True, exist_ok=True)
 
@@ -104,7 +104,7 @@ class DirectoryStorageBackend(StorageBackend):
         # Load existing chunks to get current count
         chunks_path = dir_path / "chunks.json"
         if chunks_path.exists():
-            with open(chunks_path, "r") as f:
+            with open(chunks_path) as f:
                 existing_chunks_data = json.load(f)
             current_count = len(existing_chunks_data)
         else:
@@ -119,7 +119,7 @@ class DirectoryStorageBackend(StorageBackend):
 
         # Load all existing chunks
         if chunks_path.exists():
-            with open(chunks_path, "r") as f:
+            with open(chunks_path) as f:
                 existing_chunks_data = json.load(f)
             existing_chunks = [Chunk.from_dict(c) for c in existing_chunks_data]
         else:
@@ -152,7 +152,7 @@ class DirectoryStorageBackend(StorageBackend):
         # Update metadata
         metadata_path = dir_path / "metadata.json"
         if metadata_path.exists():
-            with open(metadata_path, "r") as f:
+            with open(metadata_path) as f:
                 metadata = json.load(f)
         else:
             metadata = {}
@@ -191,14 +191,14 @@ class DirectoryStorageBackend(StorageBackend):
         config_path = dir_path / "config.json"
         if not config_path.exists():
             raise ValueError(f"config.json not found in {file_path}")
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             config = RAGletConfig.from_dict(json.load(f))
 
         # Load chunks
         chunks_path = dir_path / "chunks.json"
         if not chunks_path.exists():
             raise ValueError(f"chunks.json not found in {file_path}")
-        with open(chunks_path, "r") as f:
+        with open(chunks_path) as f:
             chunks_data = json.load(f)
         chunks = [Chunk.from_dict(c) for c in chunks_data]
 
@@ -230,7 +230,9 @@ class DirectoryStorageBackend(StorageBackend):
         from raglet.vector_store.faiss_store import FAISSVectorStore
 
         vector_store = FAISSVectorStore(
-            embedding_dim=embeddings.shape[1] if len(embeddings) > 0 else embedding_generator.get_dimension(),
+            embedding_dim=(
+                embeddings.shape[1] if len(embeddings) > 0 else embedding_generator.get_dimension()
+            ),
             config=config.search,
         )
 
@@ -280,7 +282,7 @@ class DirectoryStorageBackend(StorageBackend):
         # Load existing chunks
         chunks_path = dir_path / "chunks.json"
         if chunks_path.exists():
-            with open(chunks_path, "r") as f:
+            with open(chunks_path) as f:
                 existing_chunks_data = json.load(f)
             existing_chunks = [Chunk.from_dict(c) for c in existing_chunks_data]
         else:
@@ -321,7 +323,7 @@ class DirectoryStorageBackend(StorageBackend):
         # Update metadata
         metadata_path = dir_path / "metadata.json"
         if metadata_path.exists():
-            with open(metadata_path, "r") as f:
+            with open(metadata_path) as f:
                 metadata = json.load(f)
         else:
             metadata = {}

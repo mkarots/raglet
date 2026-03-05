@@ -161,7 +161,7 @@ class TestCLI:
             assert loaded.embeddings.shape[1] == 384  # all-MiniLM-L6-v2 dimension
 
             # Check sources
-            sources = set(chunk.source for chunk in loaded.chunks)
+            sources = {chunk.source for chunk in loaded.chunks}
             assert len(sources) == 2
             assert "test1.txt" in sources
             assert "test2.txt" in sources
@@ -177,6 +177,7 @@ class TestCLI:
 
             # Build with custom config
             from raglet.config.config import ChunkingConfig, EmbeddingConfig
+
             config = RAGletConfig(
                 chunking=ChunkingConfig(size=100, overlap=10),
                 embedding=EmbeddingConfig(model="all-MiniLM-L6-v2"),
@@ -270,6 +271,6 @@ class TestCLI:
 
             # Verify only included file processed
             loaded = RAGlet.load(str(kb_path))
-            sources = set(chunk.source for chunk in loaded.chunks)
+            sources = {chunk.source for chunk in loaded.chunks}
             assert str(workspace / "include.txt") in sources
             assert str(workspace / ".git" / "ignore.txt") not in sources

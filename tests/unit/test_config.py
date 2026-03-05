@@ -142,9 +142,7 @@ class TestConfigSerialization:
 
     def test_embedding_config_to_dict(self):
         """Test EmbeddingConfig.to_dict()."""
-        config = EmbeddingConfig(
-            model="test-model", batch_size=64, device="cuda", normalize=True
-        )
+        config = EmbeddingConfig(model="test-model", batch_size=64, device="cuda", normalize=True)
         data = config.to_dict()
 
         assert data == {
@@ -171,9 +169,7 @@ class TestConfigSerialization:
 
     def test_embedding_config_roundtrip(self):
         """Test EmbeddingConfig serialization roundtrip."""
-        original = EmbeddingConfig(
-            model="test-model", batch_size=64, device="cuda", normalize=True
-        )
+        original = EmbeddingConfig(model="test-model", batch_size=64, device="cuda", normalize=True)
         data = original.to_dict()
         restored = EmbeddingConfig.from_dict(data)
 

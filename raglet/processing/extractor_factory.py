@@ -17,7 +17,7 @@ def create_extractor(
 
     Returns:
         DocumentExtractor instance
-        
+
     Note:
         Falls back to TextExtractor for any file type that doesn't have a specific
         extractor. This allows source code files and other text-based files to be

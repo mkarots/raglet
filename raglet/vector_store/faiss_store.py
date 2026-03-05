@@ -22,7 +22,7 @@ class FAISSVectorStore(VectorStore):
         self.config.validate()
 
         self.embedding_dim = embedding_dim
-        
+
         # IndexFlatIP (Inner Product) with normalized vectors = cosine similarity
         self.index = faiss.IndexFlatIP(embedding_dim)
         self.chunks: list[Chunk] = []
@@ -92,11 +92,11 @@ class FAISSVectorStore(VectorStore):
             # FAISS returns -1 for invalid indices when there aren't enough vectors
             if idx >= 0 and idx < len(self.chunks):
                 chunk = self.chunks[idx]
-                
+
                 # Inner product is already similarity score (higher = more similar)
                 # Range: -1.0 to 1.0 (typically 0.0 to 1.0 for normalized vectors)
                 score = float(similarities[0][i])
-                
+
                 # Create a copy with score set
                 result_chunk = Chunk(
                     text=chunk.text,

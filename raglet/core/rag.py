@@ -64,14 +64,14 @@ class RAGlet:
                 # Validate provided embeddings match generator dimension
                 provided_dim = embeddings.shape[1] if len(embeddings) > 0 else 0
                 generator_dim = self.embedding_generator.get_dimension()
-                
+
                 if provided_dim != generator_dim:
                     raise ValueError(
                         f"Embedding dimension mismatch: Provided embeddings have dimension {provided_dim}, "
                         f"but model '{self.config.embedding.model}' produces dimension {generator_dim}. "
                         f"Embeddings must match the model's dimension."
                     )
-                
+
                 self.embeddings = embeddings
             else:
                 self.embeddings = self.embedding_generator.generate(chunks)
@@ -174,11 +174,11 @@ class RAGlet:
 
         # Validate query embedding dimension matches stored embeddings
         query_embedding = self.embedding_generator.generate_single(query)
-        
+
         if len(self.embeddings) > 0:
             stored_dim = self.embeddings.shape[1]
             query_dim = query_embedding.shape[0]
-            
+
             if stored_dim != query_dim:
                 raise ValueError(
                     f"Embedding dimension mismatch: Stored embeddings have dimension {stored_dim}, "

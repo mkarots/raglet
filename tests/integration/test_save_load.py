@@ -35,15 +35,11 @@ class TestSaveLoadIntegration:
 
             # Verify chunks
             assert len(loaded.chunks) == len(raglet.chunks)
-            assert all(
-                chunk.text in [c.text for c in raglet.chunks] for chunk in loaded.chunks
-            )
+            assert all(chunk.text in [c.text for c in raglet.chunks] for chunk in loaded.chunks)
 
             # Verify embeddings
             assert loaded.embeddings.shape == raglet.embeddings.shape
-            np.testing.assert_array_almost_equal(
-                loaded.embeddings, raglet.embeddings, decimal=5
-            )
+            np.testing.assert_array_almost_equal(loaded.embeddings, raglet.embeddings, decimal=5)
 
             # Verify search works
             results = loaded.search("test file")
@@ -224,9 +220,7 @@ class TestSaveLoadIntegration:
                 # Add more chunks
                 from raglet.core.chunk import Chunk
 
-                new_chunks = [
-                    Chunk(text=f"Cycle {i} chunk", source="cycle", index=i)
-                ]
+                new_chunks = [Chunk(text=f"Cycle {i} chunk", source="cycle", index=i)]
                 raglet.add_chunks(new_chunks)
 
             # Final verification

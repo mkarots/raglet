@@ -1,13 +1,13 @@
 """Embedding generator implementation using sentence-transformers."""
 
-import sys
 import logging
+import sys
+
 import numpy as np
 
 from raglet.config.config import EmbeddingConfig
 from raglet.core.chunk import Chunk
 from raglet.embeddings.interfaces import EmbeddingGenerator
-
 
 
 class SentenceTransformerGenerator(EmbeddingGenerator):

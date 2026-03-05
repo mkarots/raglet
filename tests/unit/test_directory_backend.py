@@ -208,8 +208,9 @@ class TestDirectoryStorageBackend:
 
             # Corrupt config to use different model (different dimension)
             import json
+
             config_path = dir_path / "config.json"
-            with open(config_path, "r") as f:
+            with open(config_path) as f:
                 config_data = json.load(f)
             config_data["embedding"]["model"] = "all-mpnet-base-v2"  # 768 dims instead of 384
             with open(config_path, "w") as f:

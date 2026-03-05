@@ -8,7 +8,7 @@ from raglet.processing.interfaces import DocumentExtractor
 
 class TextExtractor(DocumentExtractor):
     """Extracts text from text-based files.
-    
+
     Handles .txt files and serves as a fallback for any file type that doesn't
     have a specific extractor (e.g., source code files like .py, .js, etc.).
     Files are read as plain text with UTF-8 encoding.
@@ -24,7 +24,7 @@ class TextExtractor(DocumentExtractor):
 
     def can_extract(self, file_path: str) -> bool:
         """Check if file is a text file.
-        
+
         Returns True for .txt files and files without extension.
         Note: TextExtractor can extract any text-based file, but this method
         only returns True for .txt files to allow other extractors to handle

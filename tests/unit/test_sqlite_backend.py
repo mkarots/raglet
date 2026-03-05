@@ -73,9 +73,7 @@ class TestSQLiteStorageBackend:
 
             loaded = backend.load(str(file_path))
             assert loaded.embeddings.shape == original_embeddings.shape
-            np.testing.assert_array_almost_equal(
-                loaded.embeddings, original_embeddings, decimal=5
-            )
+            np.testing.assert_array_almost_equal(loaded.embeddings, original_embeddings, decimal=5)
 
     def test_save_and_load_preserves_config(self):
         """Test that config is preserved after save/load."""

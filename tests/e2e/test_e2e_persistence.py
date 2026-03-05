@@ -35,9 +35,7 @@ class TestE2EPersistence:
             # Step 4: Verify data integrity
             assert len(raglet2.chunks) == len(raglet1.chunks)
             assert raglet2.embeddings.shape == raglet1.embeddings.shape
-            np.testing.assert_array_almost_equal(
-                raglet2.embeddings, raglet1.embeddings, decimal=5
-            )
+            np.testing.assert_array_almost_equal(raglet2.embeddings, raglet1.embeddings, decimal=5)
 
             # Step 5: Use loaded RAGlet (search)
             results = raglet2.search("programming language")
@@ -103,16 +101,12 @@ class TestE2EPersistence:
             raglet = RAGlet.load(str(db_path))
             from raglet.core.chunk import Chunk
 
-            raglet.add_chunks(
-                [Chunk(text="Session 2 addition", source="session2", index=0)]
-            )
+            raglet.add_chunks([Chunk(text="Session 2 addition", source="session2", index=0)])
             raglet.save(str(db_path), incremental=True)
 
             # Session 3: Add even more content
             raglet = RAGlet.load(str(db_path))
-            raglet.add_chunks(
-                [Chunk(text="Session 3 addition", source="session3", index=0)]
-            )
+            raglet.add_chunks([Chunk(text="Session 3 addition", source="session3", index=0)])
             raglet.save(str(db_path), incremental=True)
 
             # Final verification

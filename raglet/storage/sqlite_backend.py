@@ -21,7 +21,7 @@ class SQLiteStorageBackend(StorageBackend):
 
     def _create_schema(self, conn: sqlite3.Connection) -> None:
         """Create database schema if needed.
-        
+
         Args:
             conn: SQLite connection
         """
@@ -53,7 +53,7 @@ class SQLiteStorageBackend(StorageBackend):
 
     def _save_full(self, conn: sqlite3.Connection, raglet: RAGlet) -> None:
         """Save full RAGlet (replace all data).
-        
+
         Args:
             conn: SQLite connection
             raglet: RAGlet instance to save
@@ -101,11 +101,9 @@ class SQLiteStorageBackend(StorageBackend):
             ("embedding_dim", str(raglet.embedding_generator.get_dimension())),
         )
 
-    def _add_chunks_incremental(
-        self, conn: sqlite3.Connection, raglet: RAGlet
-    ) -> None:
+    def _add_chunks_incremental(self, conn: sqlite3.Connection, raglet: RAGlet) -> None:
         """Add chunks incrementally (append new chunks).
-        
+
         Args:
             conn: SQLite connection
             raglet: RAGlet instance with new chunks
@@ -143,13 +141,13 @@ class SQLiteStorageBackend(StorageBackend):
 
     def _load_config(self, conn: sqlite3.Connection) -> RAGletConfig:
         """Load configuration from database.
-        
+
         Args:
             conn: SQLite connection
-            
+
         Returns:
             RAGletConfig instance
-            
+
         Raises:
             ValueError: If config is missing or invalid
         """
@@ -163,17 +161,15 @@ class SQLiteStorageBackend(StorageBackend):
 
     def _load_chunks(self, conn: sqlite3.Connection) -> list[Chunk]:
         """Load chunks from database.
-        
+
         Args:
             conn: SQLite connection
-            
+
         Returns:
             List of Chunk objects
         """
         chunks = []
-        for row in conn.execute(
-            "SELECT text, source, index, metadata FROM chunks ORDER BY id"
-        ):
+        for row in conn.execute("SELECT text, source, index, metadata FROM chunks ORDER BY id"):
             text, source, index, metadata_json = row
             metadata = json.loads(metadata_json) if metadata_json else {}
             chunks.append(Chunk(text=text, source=source, index=index, metadata=metadata))
@@ -181,20 +177,18 @@ class SQLiteStorageBackend(StorageBackend):
 
     def _load_embeddings(self, conn: sqlite3.Connection) -> np.ndarray:
         """Load embeddings from database.
-        
+
         Args:
             conn: SQLite connection
-            
+
         Returns:
             NumPy array of embeddings (shape: [n_chunks, embedding_dim])
-            
+
         Raises:
             ValueError: If embeddings are missing or invalid
         """
         # Get embedding dimension from metadata
-        result = conn.execute(
-            "SELECT value FROM metadata WHERE key = ?", ("embedding_dim",)
-        )
+        result = conn.execute("SELECT value FROM metadata WHERE key = ?", ("embedding_dim",))
         row = result.fetchone()
         if row is None:
             raise ValueError("embedding_dim not found in metadata")
@@ -203,9 +197,7 @@ class SQLiteStorageBackend(StorageBackend):
 
         # Load all embeddings
         embeddings_list = []
-        for row in conn.execute(
-            "SELECT embedding FROM embeddings ORDER BY chunk_id"
-        ):
+        for row in conn.execute("SELECT embedding FROM embeddings ORDER BY chunk_id"):
             embedding_bytes = row[0]
             embedding_array = np.frombuffer(embedding_bytes, dtype=np.float32)
             embeddings_list.append(embedding_array)
@@ -223,22 +215,22 @@ class SQLiteStorageBackend(StorageBackend):
         incremental: bool = False,
     ) -> None:
         """Save RAGlet to SQLite file.
-        
+
         Args:
             raglet: RAGlet instance to save
             file_path: Path to SQLite file
             incremental: If True, append new chunks; if False, replace all data
-            
+
         Raises:
             ValueError: If save fails
             IOError: If file operations fail
         """
         file_path_obj = Path(file_path)
-        
+
         # Ensure parent directory exists
         if file_path_obj.parent != file_path_obj:  # Not root directory
             file_path_obj.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Check if path is actually a directory (shouldn't happen, but safety check)
         if file_path_obj.exists() and file_path_obj.is_dir():
             raise ValueError(
@@ -258,19 +250,19 @@ class SQLiteStorageBackend(StorageBackend):
             conn.commit()
         except Exception as e:
             conn.rollback()
-            raise IOError(f"Failed to save RAGlet to {file_path}: {e}") from e
+            raise OSError(f"Failed to save RAGlet to {file_path}: {e}") from e
         finally:
             conn.close()
 
     def load(self, file_path: str) -> RAGlet:
         """Load RAGlet from SQLite file.
-        
+
         Args:
             file_path: Path to SQLite file
-            
+
         Returns:
             RAGlet instance
-            
+
         Raises:
             FileNotFoundError: If file doesn't exist
             ValueError: If file format is invalid
@@ -296,12 +288,12 @@ class SQLiteStorageBackend(StorageBackend):
             from raglet.vector_store.faiss_store import FAISSVectorStore
 
             embedding_generator = SentenceTransformerGenerator(config.embedding)
-            
+
             # Validate embedding dimension matches model dimension
             if len(embeddings) > 0:
                 saved_embedding_dim = embeddings.shape[1]
                 model_embedding_dim = embedding_generator.get_dimension()
-                
+
                 if saved_embedding_dim != model_embedding_dim:
                     raise ValueError(
                         f"Embedding dimension mismatch: Saved embeddings have dimension {saved_embedding_dim}, "
@@ -310,9 +302,13 @@ class SQLiteStorageBackend(StorageBackend):
                         f"To fix: Regenerate embeddings with the correct model or use the model that matches "
                         f"the saved embeddings."
                     )
-            
+
             vector_store = FAISSVectorStore(
-                embedding_dim=embeddings.shape[1] if len(embeddings) > 0 else embedding_generator.get_dimension(),
+                embedding_dim=(
+                    embeddings.shape[1]
+                    if len(embeddings) > 0
+                    else embedding_generator.get_dimension()
+                ),
                 config=config.search,
             )
 
@@ -334,7 +330,7 @@ class SQLiteStorageBackend(StorageBackend):
 
     def supports_incremental(self) -> bool:
         """Check if backend supports incremental updates.
-        
+
         Returns:
             True (SQLite supports incremental updates)
         """
@@ -348,13 +344,13 @@ class SQLiteStorageBackend(StorageBackend):
         raglet: Optional[RAGlet] = None,
     ) -> None:
         """Add chunks incrementally to existing storage.
-        
+
         Args:
             file_path: Path to storage file
             chunks: New chunks to add
             embeddings: Embeddings for new chunks
             raglet: Optional RAGlet instance (for context)
-            
+
         Raises:
             ValueError: If incremental updates not supported
             IOError: If file operations fail
@@ -399,6 +395,6 @@ class SQLiteStorageBackend(StorageBackend):
             conn.commit()
         except Exception as e:
             conn.rollback()
-            raise IOError(f"Failed to add chunks to {file_path}: {e}") from e
+            raise OSError(f"Failed to add chunks to {file_path}: {e}") from e
         finally:
             conn.close()

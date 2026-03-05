@@ -171,8 +171,9 @@ class TestCLIE2E:
         """Test CLI handles missing workspace gracefully."""
         # This would be tested with actual CLI invocation
         # For now, test the underlying logic
-        from raglet.cli import build_command
         from unittest.mock import MagicMock
+
+        from raglet.cli import build_command
 
         args = MagicMock()
         args.workspace = "/nonexistent/directory"

@@ -3,11 +3,9 @@
 
 import argparse
 import glob
-import json
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 from raglet import RAGlet, RAGletConfig
 from raglet.core.chunk import Chunk
@@ -23,14 +21,17 @@ def build_command(args: argparse.Namespace) -> int:
         Exit code (0 for success, 1 for error)
     """
     if not args.inputs:
-        print("Error: No inputs provided. Specify files, directories, or glob patterns.", file=sys.stderr)
+        print(
+            "Error: No inputs provided. Specify files, directories, or glob patterns.",
+            file=sys.stderr,
+        )
         return 1
 
     # Collect all input files
     all_files = []
     for input_path in args.inputs:
         path = Path(input_path)
-        
+
         if path.is_file():
             # Individual files are always included
             all_files.append(str(path))
@@ -48,13 +49,17 @@ def build_command(args: argparse.Namespace) -> int:
                 print(f"Warning: Input not found: {input_path}", file=sys.stderr)
 
     # Filter out common ignores
-    ignore_patterns = args.ignore.split(",") if args.ignore else [
-        ".git",
-        "__pycache__",
-        ".venv",
-        "node_modules",
-        ".raglet",
-    ]
+    ignore_patterns = (
+        args.ignore.split(",")
+        if args.ignore
+        else [
+            ".git",
+            "__pycache__",
+            ".venv",
+            "node_modules",
+            ".raglet",
+        ]
+    )
     filtered_files = []
     for file in all_files:
         if not any(pattern in file for pattern in ignore_patterns):
@@ -117,6 +122,7 @@ def build_command(args: argparse.Namespace) -> int:
     except Exception as e:
         print(f"Error building raglet: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         return 1
 
@@ -287,7 +293,7 @@ def chat_command(args: argparse.Namespace) -> int:
         config = RAGletConfig()
         raglet = RAGlet(chunks=[], config=config)
         raglet.save(str(raglet_path))
-        print(f"   Created empty raglet")
+        print("   Created empty raglet")
 
     # Get API key
     api_key = args.api_key or os.getenv("ANTHROPIC_API_KEY")
@@ -320,7 +326,7 @@ def chat_command(args: argparse.Namespace) -> int:
             print(f"   Saved {len(raglet.chunks)} total chunks")
             return 0
 
-        if user_query.lower() in ['exit', 'quit', 'q']:
+        if user_query.lower() in ["exit", "quit", "q"]:
             print("\n👋 Saving and exiting...")
             raglet.save(str(raglet_path), incremental=True)
             print(f"   Saved {len(raglet.chunks)} total chunks")
@@ -336,10 +342,9 @@ def chat_command(args: argparse.Namespace) -> int:
 
         # Step 2: Build context
         if relevant_chunks:
-            context_text = "\n\n".join([
-                f"[Source: {chunk.source}]\n{chunk.text}"
-                for chunk in relevant_chunks
-            ])
+            context_text = "\n\n".join(
+                [f"[Source: {chunk.source}]\n{chunk.text}" for chunk in relevant_chunks]
+            )
             prompt = f"""Based on the following context from the knowledge base, answer the user's question.
 
 Context:
