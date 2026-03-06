@@ -165,11 +165,18 @@ class TestSearchAccuracy:
             ]
 
             # Test 1: Search for "Python programming"
-            print("\nTesting 'Python programming' query...")
-            print(f"Expected chunks (indices): {python_chunks}")
             results = raglet.search("Python programming", top_k=5)
-            result_indices = [all_chunks.index(chunk) for chunk in results if chunk in all_chunks]
-            print(f"Returned chunks (indices): {result_indices}")
+            # Match chunks by (text, source, index) since search returns new Chunk objects with scores
+            result_indices = [
+                i
+                for i, orig_chunk in enumerate(all_chunks)
+                if any(
+                    r.text == orig_chunk.text
+                    and r.source == orig_chunk.source
+                    and r.index == orig_chunk.index
+                    for r in results
+                )
+            ]
 
             # At least one result should be from our Python chunks
             assert len(results) > 0, "No results for 'Python programming'"
@@ -178,11 +185,17 @@ class TestSearchAccuracy:
             ), f"Expected Python chunks {python_chunks}, got {result_indices}"
 
             # Test 2: Search for "machine learning algorithms"
-            print("\nTesting 'machine learning algorithms' query...")
-            print(f"Expected chunks (indices): {ml_chunks}")
             results = raglet.search("machine learning algorithms", top_k=5)
-            result_indices = [all_chunks.index(chunk) for chunk in results if chunk in all_chunks]
-            print(f"Returned chunks (indices): {result_indices}")
+            result_indices = [
+                i
+                for i, orig_chunk in enumerate(all_chunks)
+                if any(
+                    r.text == orig_chunk.text
+                    and r.source == orig_chunk.source
+                    and r.index == orig_chunk.index
+                    for r in results
+                )
+            ]
 
             assert len(results) > 0, "No results for 'machine learning algorithms'"
             assert any(
@@ -190,11 +203,17 @@ class TestSearchAccuracy:
             ), f"Expected ML chunks {ml_chunks}, got {result_indices}"
 
             # Test 3: Search for "RAG retrieval augmented"
-            print("\nTesting 'RAG retrieval augmented' query...")
-            print(f"Expected chunks (indices): {rag_chunks}")
             results = raglet.search("RAG retrieval augmented", top_k=5)
-            result_indices = [all_chunks.index(chunk) for chunk in results if chunk in all_chunks]
-            print(f"Returned chunks (indices): {result_indices}")
+            result_indices = [
+                i
+                for i, orig_chunk in enumerate(all_chunks)
+                if any(
+                    r.text == orig_chunk.text
+                    and r.source == orig_chunk.source
+                    and r.index == orig_chunk.index
+                    for r in results
+                )
+            ]
 
             assert len(results) > 0, "No results for 'RAG retrieval augmented'"
             assert any(
@@ -202,11 +221,17 @@ class TestSearchAccuracy:
             ), f"Expected RAG chunks {rag_chunks}, got {result_indices}"
 
             # Test 4: Search for "vector database embeddings"
-            print("\nTesting 'vector database embeddings' query...")
-            print(f"Expected chunks (indices): {vector_db_chunks}")
             results = raglet.search("vector database embeddings", top_k=5)
-            result_indices = [all_chunks.index(chunk) for chunk in results if chunk in all_chunks]
-            print(f"Returned chunks (indices): {result_indices}")
+            result_indices = [
+                i
+                for i, orig_chunk in enumerate(all_chunks)
+                if any(
+                    r.text == orig_chunk.text
+                    and r.source == orig_chunk.source
+                    and r.index == orig_chunk.index
+                    for r in results
+                )
+            ]
 
             assert len(results) > 0, "No results for 'vector database embeddings'"
             assert any(
@@ -214,11 +239,17 @@ class TestSearchAccuracy:
             ), f"Expected vector DB chunks {vector_db_chunks}, got {result_indices}"
 
             # Test 5: Search for "FAISS vector search"
-            print("\nTesting 'FAISS vector search' query...")
-            print(f"Expected chunks (indices): {faiss_chunks}")
             results = raglet.search("FAISS vector search", top_k=5)
-            result_indices = [all_chunks.index(chunk) for chunk in results if chunk in all_chunks]
-            print(f"Returned chunks (indices): {result_indices}")
+            result_indices = [
+                i
+                for i, orig_chunk in enumerate(all_chunks)
+                if any(
+                    r.text == orig_chunk.text
+                    and r.source == orig_chunk.source
+                    and r.index == orig_chunk.index
+                    for r in results
+                )
+            ]
 
             assert len(results) > 0, "No results for 'FAISS vector search'"
             assert any(

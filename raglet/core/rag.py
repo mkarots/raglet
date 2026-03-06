@@ -1,7 +1,8 @@
 """RAGlet main class."""
 
+import atexit
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 
@@ -12,7 +13,12 @@ from raglet.processing.interfaces import Chunker, DocumentExtractor
 from raglet.vector_store.interfaces import VectorStore
 
 if TYPE_CHECKING:
+    from raglet.cli_utils import CLIOutput
     from raglet.storage.interfaces import StorageBackend
+
+# Default ignore patterns for file discovery
+# These patterns are excluded when processing directories or glob patterns
+DEFAULT_IGNORE_PATTERNS = [".git", "__pycache__", ".venv", "node_modules", ".raglet", "assets", "*.egg-info", "*.pyc", "*.pyo", "*.pyd", "*.pyw", "*.pyz"]
 
 
 class RAGlet:
@@ -25,6 +31,8 @@ class RAGlet:
         embedding_generator: Optional[EmbeddingGenerator] = None,
         vector_store: Optional[VectorStore] = None,
         embeddings: Optional[np.ndarray] = None,
+        auto_save_path: Optional[str] = None,
+        auto_save_threshold: Optional[int] = None,
     ):
         """Initialize RAGlet.
 
@@ -34,9 +42,21 @@ class RAGlet:
             embedding_generator: Optional embedding generator (created if None)
             vector_store: Optional vector store (created if None)
             embeddings: Optional pre-computed embeddings (generated if None and chunks exist)
+            auto_save_path: Optional path for automatic saves (enables buffering)
+            auto_save_threshold: Optional threshold in characters for auto-save (default: 1000)
+                                 Only used if auto_save_path is set
         """
         self.chunks = chunks
         self.config = config
+        
+        # Auto-save configuration
+        self._auto_save_path: Optional[str] = auto_save_path
+        self._auto_save_threshold: int = auto_save_threshold if auto_save_threshold is not None else 1000
+        self._unsaved_chars: int = 0
+        
+        # Register exit handler if auto-save enabled
+        if self._auto_save_path:
+            atexit.register(self._save_on_exit)
 
         # Create default implementations if not provided
         if embedding_generator is None:
@@ -88,18 +108,27 @@ class RAGlet:
         embedding_generator: Optional[EmbeddingGenerator] = None,
         vector_store: Optional[VectorStore] = None,
         config: Optional[RAGletConfig] = None,
+        ignore_patterns: Optional[list[str]] = None,
+        output: Optional["CLIOutput"] = None,
     ) -> "RAGlet":
-        """Create RAGlet from files.
+        """Create RAGlet from files, directories, or glob patterns.
 
-        Full pipeline: Extract → Chunk → Embed → Index
+        Full pipeline: Expand inputs → Extract → Chunk → Embed → Index
+
+        Supports:
+        - Individual files: `["file.txt"]`
+        - Directories: `["docs/"]` (recursively finds all files)
+        - Glob patterns: `["*.py"]`, `["**/*.md"]`, `["docs/**/*.txt"]`
 
         Args:
-            files: List of file paths
+            files: List of file paths, directory paths, or glob patterns
             document_extractor: Optional document extractor (uses factory if None)
             chunker: Optional chunker (creates default if None)
             embedding_generator: Optional embedding generator (creates default if None)
             vector_store: Optional vector store (creates default if None)
             config: Optional configuration (uses defaults if None)
+            ignore_patterns: Optional list of patterns to ignore (e.g., [".git", "__pycache__"])
+            output: Optional CLI output handler for progress messages
 
         Returns:
             RAGlet instance with searchable index
@@ -113,13 +142,27 @@ class RAGlet:
 
         config.validate()
 
+        # Expand inputs: files, directories, glob patterns
+        from raglet.utils import expand_file_inputs
+
+        # Handle empty file list (allows creating empty RAGlet)
+        if not files:
+            filtered_files = []
+        else:
+            filtered_files = expand_file_inputs(files, ignore_patterns=ignore_patterns)
+
         # Step 1: Extract text from files
         from raglet.processing.chunker import SentenceAwareChunker
         from raglet.processing.extractor_factory import create_extractor
 
-        all_chunks = []
+        if output and filtered_files:
+            output.progress(f"Extracting text from {len(filtered_files)} file{'s' if len(filtered_files) != 1 else ''}...")
 
-        for file_path in files:
+        all_chunks = []
+        for i, file_path in enumerate(filtered_files, 1):
+            if output and i % max(1, len(filtered_files) // 10) == 0:
+                output.verbose_msg(f"  Processing file {i}/{len(filtered_files)}: {Path(file_path).name}")
+
             if document_extractor is None:
                 extractor = create_extractor(file_path)
             else:
@@ -136,14 +179,23 @@ class RAGlet:
             chunks = chunker_instance.chunk(text, metadata={"source": file_path})
             all_chunks.extend(chunks)
 
+        if output:
+            output.progress(f"Chunked text into {len(all_chunks)} chunk{'s' if len(all_chunks) != 1 else ''}...")
+            output.progress("Generating embeddings...")
+
         # Step 3 & 4: Generate embeddings and create vector store
         # (handled in __init__)
-        return cls(
+        raglet = cls(
             chunks=all_chunks,
             config=config,
             embedding_generator=embedding_generator,
             vector_store=vector_store,
         )
+
+        if output:
+            output.progress("Indexing vectors...")
+
+        return raglet
 
     def search(
         self,
@@ -268,6 +320,7 @@ class RAGlet:
         document_extractor: Optional[DocumentExtractor] = None,
         chunker: Optional[Chunker] = None,
         file_path: Optional[str] = None,
+        output: Optional["CLIOutput"] = None,
     ) -> None:
         """Add files to existing RAGlet.
 
@@ -278,6 +331,7 @@ class RAGlet:
             document_extractor: Optional document extractor (uses factory if None)
             chunker: Optional chunker (uses RAGlet's config if None)
             file_path: Optional file path (if provided, saves immediately)
+            output: Optional CLI output handler for progress messages
 
         Raises:
             FileNotFoundError: If any file doesn't exist
@@ -286,6 +340,9 @@ class RAGlet:
         if not files:
             return
 
+        if output:
+            output.progress(f"Extracting text from {len(files)} file{'s' if len(files) != 1 else ''}...")
+
         # Extract and chunk files (similar to from_files logic)
         from raglet.processing.chunker import SentenceAwareChunker
         from raglet.processing.extractor_factory import create_extractor
@@ -293,6 +350,9 @@ class RAGlet:
         new_chunks = []
 
         for file_path_item in files:
+            if output:
+                output.verbose_msg(f"  Processing: {Path(file_path_item).name}")
+
             if document_extractor is None:
                 extractor = create_extractor(file_path_item)
             else:
@@ -309,9 +369,71 @@ class RAGlet:
             chunks = chunker_instance.chunk(text, metadata={"source": file_path_item})
             new_chunks.extend(chunks)
 
+        if output:
+            output.progress(f"Chunked into {len(new_chunks)} chunk{'s' if len(new_chunks) != 1 else ''}...")
+            output.progress("Generating embeddings...")
+
         # Add chunks (reuse add_chunks logic)
         if new_chunks:
             self.add_chunks(new_chunks, file_path=file_path)
+
+    def add_text(
+        self,
+        text: str,
+        source: str = "manual",
+        metadata: Optional[dict[str, Any]] = None,
+        file_path: Optional[str] = None,
+    ) -> None:
+        """Add raw text to RAGlet (chunks automatically).
+
+        Convenience method for adding raw text. The text will be chunked using
+        the RAGlet's chunking configuration.
+
+        Args:
+            text: Raw text to add
+            source: Source identifier for the text (default: "manual")
+            metadata: Optional metadata dictionary
+            file_path: Optional file path (if provided, saves immediately)
+
+        Raises:
+            ValueError: If text is empty
+        """
+        if not text:
+            return
+
+        from raglet.processing.chunker import SentenceAwareChunker
+
+        # Chunk text using RAGlet's chunking config
+        chunker = SentenceAwareChunker(self.config.chunking)
+        chunk_metadata = metadata or {}
+        chunk_metadata["source"] = source
+
+        chunks = chunker.chunk(text, metadata=chunk_metadata)
+        self.add_chunks(chunks, file_path=file_path)
+
+    def add_file(
+        self,
+        file_path_item: str,
+        document_extractor: Optional[DocumentExtractor] = None,
+        chunker: Optional[Chunker] = None,
+        save_path: Optional[str] = None,
+    ) -> None:
+        """Add a single file to RAGlet.
+
+        Convenience method for adding a single file. Equivalent to calling
+        add_files with a single-item list.
+
+        Args:
+            file_path_item: Path to file to add
+            document_extractor: Optional document extractor (uses factory if None)
+            chunker: Optional chunker (uses RAGlet's config if None)
+            save_path: Optional file path (if provided, saves immediately)
+
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            ValueError: If extraction fails
+        """
+        self.add_files([file_path_item], document_extractor, chunker, save_path)
 
     def add_chunks(
         self,
@@ -320,12 +442,21 @@ class RAGlet:
     ) -> None:
         """Add chunks incrementally.
 
+        Chunk indices are automatically assigned based on the current number of chunks.
+        If chunks already have indices set, they will be reassigned to ensure continuity.
+
         Args:
-            new_chunks: New chunks to add
+            new_chunks: New chunks to add (indices will be auto-assigned)
             file_path: Optional file path (if provided, saves immediately)
         """
         if not new_chunks:
             return
+
+        # Auto-assign chunk indices based on current chunk count
+        current_index = len(self.chunks)
+        for i, chunk in enumerate(new_chunks):
+            # Reassign index to ensure continuity
+            chunk.index = current_index + i
 
         # Generate embeddings for new chunks
         new_embeddings = self.embedding_generator.generate(new_chunks)

@@ -2,7 +2,7 @@
 
 import json
 import sqlite3
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Optional
 
@@ -36,7 +36,7 @@ class SQLiteStorageBackend(StorageBackend):
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 text TEXT NOT NULL,
                 source TEXT NOT NULL,
-                index INTEGER NOT NULL,
+                "index" INTEGER NOT NULL,
                 metadata TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -66,7 +66,7 @@ class SQLiteStorageBackend(StorageBackend):
         # Insert chunks and embeddings
         for i, chunk in enumerate(raglet.chunks):
             cursor = conn.execute(
-                "INSERT INTO chunks (text, source, index, metadata) VALUES (?, ?, ?, ?)",
+                'INSERT INTO chunks (text, source, "index", metadata) VALUES (?, ?, ?, ?)',
                 (chunk.text, chunk.source, chunk.index, json.dumps(chunk.metadata)),
             )
             chunk_id = cursor.lastrowid
@@ -86,7 +86,7 @@ class SQLiteStorageBackend(StorageBackend):
         )
         conn.execute(
             "INSERT INTO metadata (key, value) VALUES (?, ?)",
-            ("created_at", datetime.utcnow().isoformat() + "Z"),
+            ("created_at", datetime.now(UTC).isoformat().replace("+00:00", "Z")),
         )
         conn.execute(
             "INSERT INTO metadata (key, value) VALUES (?, ?)",
@@ -119,7 +119,7 @@ class SQLiteStorageBackend(StorageBackend):
         for i, chunk in enumerate(new_chunks):
             chunk_index = current_count + i
             cursor = conn.execute(
-                "INSERT INTO chunks (text, source, index, metadata) VALUES (?, ?, ?, ?)",
+                'INSERT INTO chunks (text, source, "index", metadata) VALUES (?, ?, ?, ?)',
                 (chunk.text, chunk.source, chunk.index, json.dumps(chunk.metadata)),
             )
             chunk_id = cursor.lastrowid
@@ -169,7 +169,7 @@ class SQLiteStorageBackend(StorageBackend):
             List of Chunk objects
         """
         chunks = []
-        for row in conn.execute("SELECT text, source, index, metadata FROM chunks ORDER BY id"):
+        for row in conn.execute('SELECT text, source, "index", metadata FROM chunks ORDER BY id'):
             text, source, index, metadata_json = row
             metadata = json.loads(metadata_json) if metadata_json else {}
             chunks.append(Chunk(text=text, source=source, index=index, metadata=metadata))
@@ -369,7 +369,7 @@ class SQLiteStorageBackend(StorageBackend):
             # Add new chunks
             for i, chunk in enumerate(chunks):
                 cursor = conn.execute(
-                    "INSERT INTO chunks (text, source, index, metadata) VALUES (?, ?, ?, ?)",
+                    'INSERT INTO chunks (text, source, "index", metadata) VALUES (?, ?, ?, ?)',
                     (chunk.text, chunk.source, chunk.index, json.dumps(chunk.metadata)),
                 )
                 chunk_id = cursor.lastrowid

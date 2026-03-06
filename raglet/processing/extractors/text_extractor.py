@@ -9,9 +9,15 @@ from raglet.processing.interfaces import DocumentExtractor
 class TextExtractor(DocumentExtractor):
     """Extracts text from text-based files.
 
-    Handles .txt files and serves as a fallback for any file type that doesn't
-    have a specific extractor (e.g., source code files like .py, .js, etc.).
-    Files are read as plain text with UTF-8 encoding.
+    Handles all text files including:
+    - .txt files
+    - Source code files (.py, .js, .ts, .java, .cpp, .go, .rs, etc.)
+    - Config files (Makefile, Dockerfile, .yaml, .json, .toml, etc.)
+    - Markdown files (.md) - though MarkdownExtractor handles these first
+    - Any other UTF-8 text file
+
+    Files are read as plain text with UTF-8 encoding. Binary formats (PDF, DOCX, etc.)
+    are not supported - raglet focuses on text files only.
     """
 
     def __init__(self, encoding: str = "utf-8"):
@@ -27,9 +33,9 @@ class TextExtractor(DocumentExtractor):
 
         Returns True for .txt files and files without extension.
         Note: TextExtractor can extract any text-based file, but this method
-        only returns True for .txt files to allow other extractors to handle
-        their specific formats first. The factory falls back to TextExtractor
-        for unknown file types.
+        only returns True for .txt files to allow other extractors (like MarkdownExtractor)
+        to handle their specific formats first. The factory falls back to TextExtractor
+        for all other text file types (source code, config files, etc.).
         """
         path = Path(file_path)
         return path.suffix.lower() == ".txt" or path.suffix == ""

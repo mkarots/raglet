@@ -27,17 +27,26 @@ class TestCLIE2E:
     def test_cli_build_query_workflow(self):
         """Test complete build → query workflow."""
         with tempfile.TemporaryDirectory() as tmpdir:
+
             workspace = Path(tmpdir)
             kb_path = workspace / ".raglet"
 
             # Create test files
+
             (workspace / "doc1.txt").write_text("Python is a programming language.")
             (workspace / "doc2.md").write_text("# Machine Learning\n\nML uses algorithms.")
 
+
             # Build knowledge base using Python API (simulating CLI)
+
             from raglet import RAGlet, RAGletConfig
 
+
+
             config = RAGletConfig()
+
+
+
             raglet = RAGlet.from_files(
                 [
                     str(workspace / "doc1.txt"),
@@ -45,17 +54,30 @@ class TestCLIE2E:
                 ],
                 config=config,
             )
+
+
+
             raglet.save(str(kb_path))
 
+
             # Verify knowledge base created
+
             assert kb_path.exists()
 
+
             # Query using Python API (simulating CLI)
+
             loaded = RAGlet.load(str(kb_path))
+
+
+
             results = loaded.search("Python", top_k=1)
+
+
 
             assert len(results) > 0
             assert "python" in results[0].text.lower()
+
 
     def test_cli_incremental_add_workflow(self):
         """Test incremental add workflow."""
@@ -91,8 +113,8 @@ class TestCLIE2E:
             assert len(reloaded.chunks) > len(chunks)
             assert any("New content" in chunk.text for chunk in reloaded.chunks)
 
-    def test_cli_export_workflow(self):
-        """Test export workflow."""
+    def test_cli_package_workflow(self):
+        """Test package workflow."""
         import zipfile
 
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -164,18 +164,6 @@ class TestPreciseSearch:
 
             debug_info["result_indices"] = result_indices
 
-            # Print for visibility when running with -s flag
-            print("\n=== DEBUG INFO ===")
-            print(f"Python chunks found at: {debug_info['python_chunk_indices']}")
-            print(f"Total chunks: {debug_info['total_chunks']}")
-            print(f"Vector store count: {debug_info['vector_store_count']}")
-            print(f"Search returned {debug_info['results_count']} results")
-            print(f"Result indices: {debug_info['result_indices']}")
-            if results:
-                print(f"First result score: {debug_info.get('first_result_score')}")
-                print(f"First result text: {debug_info.get('first_result_text', '')[:80]}...")
-            print("==================\n")
-
             # Assertion 1: Verify we got results
             assert len(results) > 0, (
                 f"No search results!\n"
@@ -309,17 +297,6 @@ class TestPreciseSearch:
             if results:
                 debug_info["first_result_score"] = results[0].score
                 debug_info["first_result_text"] = results[0].text[:100]
-
-            # Print for visibility when running with -s flag
-            print("\n=== DEBUG INFO (ML Test) ===")
-            print(f"ML chunks found at: {debug_info['ml_chunk_indices']}")
-            print(f"Total chunks: {debug_info['total_chunks']}")
-            print(f"Search returned {debug_info['results_count']} results")
-            print(f"Result indices: {debug_info['result_indices']}")
-            if results:
-                print(f"First result score: {debug_info.get('first_result_score')}")
-                print(f"First result text: {debug_info.get('first_result_text', '')[:80]}...")
-            print("============================\n")
 
             # Assertion 1: Verify we got results
             assert len(results) > 0, (
