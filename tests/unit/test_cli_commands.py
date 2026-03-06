@@ -49,7 +49,7 @@ class TestCLICommands:
     def test_build_command_handles_no_files(self):
         """Test build_command handles case with no matching files."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            workspace = Path(tmpdir)
+            Path(tmpdir)
 
             # Mock args
             args = MagicMock()

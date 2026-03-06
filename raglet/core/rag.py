@@ -48,12 +48,12 @@ class RAGlet:
         """
         self.chunks = chunks
         self.config = config
-        
+
         # Auto-save configuration
         self._auto_save_path: Optional[str] = auto_save_path
         self._auto_save_threshold: int = auto_save_threshold if auto_save_threshold is not None else 1000
         self._unsaved_chars: int = 0
-        
+
         # Register exit handler if auto-save enabled
         if self._auto_save_path:
             atexit.register(self._save_on_exit)

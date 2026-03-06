@@ -11,7 +11,7 @@ Need local, CPU-friendly, zero-infrastructure stack.
 
 - **Embeddings:** sentence-transformers (local, CPU-friendly)
 - **Vector Search:** FAISS IndexFlatL2 (no external DB)
-- **Document Processing:** PyPDF2, BeautifulSoup, python-docx
+- **Document Processing:** Text files only (UTF-8, no binary formats)
 - **Config:** YAML/JSON files
 - **No external services:** Everything works offline
 
@@ -22,6 +22,7 @@ Need local, CPU-friendly, zero-infrastructure stack.
 - Mature libraries
 - Small footprint
 - Zero infrastructure
+- Text-only keeps dependencies minimal (no PDF/DOCX parsers)
 
 ## Consequences
 

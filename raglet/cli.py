@@ -2,13 +2,11 @@
 """raglet CLI - Command-line interface for raglet."""
 
 import argparse
-import os
 import sys
 from pathlib import Path
 
 from raglet import RAGlet, RAGletConfig
 from raglet.cli_utils import get_output, init_output
-from raglet.core.chunk import Chunk
 
 
 def build_command(args: argparse.Namespace) -> int:
@@ -49,7 +47,7 @@ def build_command(args: argparse.Namespace) -> int:
     dirs = [f for f in args.inputs if Path(f).is_dir()]
     file_inputs = [f for f in args.inputs if Path(f).is_file()]
     globs = [f for f in args.inputs if not Path(f).exists() and ("*" in f or "?" in f)]
-    
+
     parts = []
     if dirs:
         parts.append(f"{len(dirs)} director{'y' if len(dirs) == 1 else 'ies'}")
@@ -57,13 +55,13 @@ def build_command(args: argparse.Namespace) -> int:
         parts.append(f"{len(file_inputs)} file{'s' if len(file_inputs) != 1 else ''}")
     if globs:
         parts.append(f"{len(globs)} glob pattern{'s' if len(globs) != 1 else ''}")
-    
+
     if parts:
         input_desc = ", ".join(parts)
         output.info(f"Found {input_desc} ({len(filtered_files)} file{'s' if len(filtered_files) != 1 else ''} total)...")
     else:
         output.info(f"Found {len(filtered_files)} files to process...")
-    
+
     output.progress(f"Building raglet: {output_path}")
 
     try:

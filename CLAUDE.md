@@ -123,29 +123,29 @@ from raglet.processing.interfaces import DocumentExtractor
 ### Example: Adding a New Extractor
 
 ```python
-# processing/extractors/pdf_extractor.py
+# processing/extractors/yaml_extractor.py
 
 from raglet.processing.interfaces import DocumentExtractor
 
-class PDFExtractor(DocumentExtractor):
-    """Extracts text from PDF files."""
+class YAMLExtractor(DocumentExtractor):
+    """Extracts text from YAML files."""
     
     def can_extract(self, file_path: str) -> bool:
-        """Check if file is a PDF."""
-        return file_path.lower().endswith('.pdf')
+        """Check if file is a YAML file."""
+        return file_path.lower().endswith(('.yaml', '.yml'))
     
     def extract(self, file_path: str) -> str:
-        """Extract text from PDF file.
+        """Extract text from YAML file.
         
         Args:
-            file_path: Path to PDF file
+            file_path: Path to YAML file
             
         Returns:
-            Extracted text content
+            Extracted text content (raw YAML)
             
         Raises:
             FileNotFoundError: If file doesn't exist
-            ValueError: If file is not a valid PDF
+            UnicodeDecodeError: If file encoding is invalid
         """
         # Implementation here
         pass
@@ -153,9 +153,10 @@ class PDFExtractor(DocumentExtractor):
 
 **Key points:**
 - Implements `DocumentExtractor` interface
-- Single responsibility: extract PDF text
+- Single responsibility: extract YAML text
 - Clear docstring with Args/Returns/Raises
 - Type hints on all methods
+- Note: raglet focuses on text files only (no binary formats)
 
 ---
 
@@ -371,14 +372,14 @@ rag = RAGlet.from_files(["doc.txt"], config=config)
 5. **Update docs** - Add/update documentation
 6. **Update FINAL_PLAN.md** - If scope changes
 
-### Example: Adding PDF Support
+### Example: Adding a New Text File Format Extractor
 
-1. ✅ Check scope - PDF support is IN SCOPE (FINAL_PLAN.md)
+1. ✅ Check scope - Text file formats are IN SCOPE (FINAL_PLAN.md)
 2. ✅ Check decisions - Follows Decision 002 (SOLID Architecture)
-3. ✅ Implement `PDFExtractor` - Implements `DocumentExtractor` interface
-4. ✅ Write tests - Unit tests for PDFExtractor
-5. ✅ Update factory - Add PDFExtractor to factory
-6. ✅ Update docs - Document PDF support
+3. ✅ Implement extractor - Implements `DocumentExtractor` interface
+4. ✅ Write tests - Unit tests for the extractor
+5. ✅ Update factory - Add extractor to factory
+6. ✅ Update docs - Document the new format support
 
 ---
 
@@ -410,11 +411,13 @@ Use factories to create implementations:
 # factories.py
 def create_extractor(file_path: str) -> DocumentExtractor:
     """Factory for document extractors."""
-    if file_path.endswith('.pdf'):
-        return PDFExtractor()
-    elif file_path.endswith('.md'):
+    if file_path.endswith('.md'):
         return MarkdownExtractor()
+    elif file_path.endswith('.txt'):
+        return TextExtractor()
     else:
+        # Fallback to TextExtractor for all other text files
+        # (source code, config files, etc.)
         return TextExtractor()
 ```
 
@@ -590,7 +593,7 @@ make ci             # Full CI pipeline
 
 - Python library (not web service)
 - Portable `.raglet` files
-- Document processing (.txt, .md, .pdf, .html, .docx)
+- Document processing: Text files only (.txt, .md, source code, config files, etc.)
 - Local embeddings (sentence-transformers)
 - FAISS vector search
 - Configuration system

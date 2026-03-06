@@ -38,6 +38,11 @@ raglet build docs/ --out .raglet/
 raglet build *.py                    # → raglet-out/
 raglet build docs/ --out my-kb/
 
+# Build with custom configuration
+raglet build docs/ --out .raglet/ --chunk-size 1024 --chunk-overlap 100
+raglet build docs/ --out .raglet/ --model all-mpnet-base-v2
+raglet build docs/ --out .raglet/ --ignore ".git,__pycache__,.venv" --max-files 100
+
 # Query raglet (works with any format)
 raglet query "what is X?" --raglet .raglet/
 raglet query "how does Y work?" --raglet knowledge.sqlite --top-k 10
@@ -248,6 +253,38 @@ config.chunking.overlap = 100
 config.embedding.model = "all-mpnet-base-v2"
 rag = RAGlet.from_files(["docs/"], config=config)
 ```
+
+### Build Command Configuration
+
+The `build` command supports several configuration options:
+
+```bash
+# Chunking configuration
+raglet build docs/ --chunk-size 1024 --chunk-overlap 100
+
+# Embedding model selection
+raglet build docs/ --model all-mpnet-base-v2
+raglet build docs/ --model BAAI/bge-small-en-v1.5
+
+# File filtering
+raglet build docs/ --ignore ".git,__pycache__,.venv,node_modules"
+raglet build docs/ --max-files 100  # Limit number of files processed
+
+# Combined example
+raglet build docs/ --out .raglet/ \
+  --chunk-size 1024 \
+  --chunk-overlap 100 \
+  --model all-mpnet-base-v2 \
+  --ignore ".git,__pycache__" \
+  --max-files 500
+```
+
+**Available options:**
+- `--chunk-size`: Size of text chunks (default: 512)
+- `--chunk-overlap`: Overlap between chunks (default: 50)
+- `--model`: Embedding model name (default: all-MiniLM-L6-v2)
+- `--ignore`: Comma-separated patterns to ignore (default: .git,__pycache__,.venv,node_modules,.raglet)
+- `--max-files`: Maximum number of files to process (default: all)
 
 ### Load existing raglet
 

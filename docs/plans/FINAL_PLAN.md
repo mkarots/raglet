@@ -90,7 +90,7 @@ results = rag.search("what is X?", top_k=5)
 ### ✅ IN SCOPE (MVP)
 
 **Core Functionality:**
-- Document processing: .txt, .md, .pdf, .html, .docx
+- Document processing: Text files only (.txt, .md, source code files, Makefile, Dockerfile, etc.)
 - Text chunking (512 tokens, 50 overlap, sentence-aware)
 - Local embeddings (sentence-transformers, CPU-friendly)
 - Vector search (FAISS IndexFlatL2)
@@ -155,10 +155,9 @@ results = rag.search("what is X?", top_k=5)
 - `numpy>=1.24.0` - Array operations
 
 **Document Processing:**
-- `PyPDF2>=3.0.0` - PDF extraction
-- `beautifulsoup4>=4.12.0` - HTML parsing
-- `python-docx>=1.1.0` - DOCX extraction
-- `markdown>=3.5.0` - Markdown parsing
+- Text files only (no binary formats)
+- All files read as UTF-8 text (source code, config files, markdown, etc.)
+- No special parsing libraries needed (pure text extraction)
 
 **Optional:**
 - `faiss-gpu` - GPU acceleration (optional dependency)

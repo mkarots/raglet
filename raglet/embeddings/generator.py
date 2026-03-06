@@ -1,7 +1,7 @@
 """Embedding generator implementation using sentence-transformers."""
 
 import threading
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 
@@ -56,7 +56,7 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
 
         # Get or create cached model instance
         cache_key = (config.model, config.device)
-        
+
         with _cache_lock:
             if cache_key not in _model_cache:
                 # First time loading this model - create new instance
@@ -65,7 +65,7 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
                     _model_cache[cache_key] = SentenceTransformer(config.model, device=config.device)
                 except Exception as e:
                     raise ValueError(f"Failed to load embedding model '{config.model}': {e}") from e
-            
+
             # Use cached model instance
             self.model = _model_cache[cache_key]
             self._dimension = self.model.get_sentence_embedding_dimension()
@@ -81,7 +81,7 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
             except Exception:
                 # No CLI context available - silent (library usage)
                 return
-        
+
         if output:
             output.warning(
                 f"Loading embedding model '{model_name}'... "
