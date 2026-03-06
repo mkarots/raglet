@@ -226,25 +226,11 @@ class DirectoryStorageBackend(StorageBackend):
                     f"the saved embeddings."
                 )
 
-        # Rebuild FAISS index
-        from raglet.vector_store.faiss_store import FAISSVectorStore
-
-        vector_store = FAISSVectorStore(
-            embedding_dim=(
-                embeddings.shape[1] if len(embeddings) > 0 else embedding_generator.get_dimension()
-            ),
-            config=config.search,
-        )
-
-        if len(chunks) > 0:
-            vector_store.add_vectors(embeddings, chunks)
-
-        # Create RAGlet
+        # Create RAGlet (will rebuild FAISS index on init)
         return RAGlet(
             chunks=chunks,
             config=config,
             embedding_generator=embedding_generator,
-            vector_store=vector_store,
             embeddings=embeddings,
         )
 

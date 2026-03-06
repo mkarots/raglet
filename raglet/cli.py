@@ -35,11 +35,8 @@ def build_command(args: argparse.Namespace) -> int:
         return 1
 
     # Determine output path (build only creates directories)
-    if args.out:
+    # --out is required, so args.out is guaranteed to be set
         output_path = Path(args.out)
-    else:
-        # Default: explicit non-hidden directory
-        output_path = Path("raglet-out")
 
     # Analyze original inputs to show what's being processed
     dirs = [f for f in args.inputs if Path(f).is_dir()]
@@ -101,9 +98,9 @@ def build_command(args: argparse.Namespace) -> int:
     except Exception as e:
         output.error(f"Building raglet failed: {e}")
         if getattr(args, "verbose", False):
-            import traceback
+        import traceback
 
-            traceback.print_exc()
+        traceback.print_exc()
         return 1
 
 
@@ -130,8 +127,8 @@ def query_command(args: argparse.Namespace) -> int:
         raglet = RAGlet.load(str(raglet_path))
 
         # Search
-        output.verbose_msg(f"Searching for: {args.q}")
-        results = raglet.search(args.q, top_k=args.top_k)
+        output.verbose_msg(f"Searching for: {args.query}")
+        results = raglet.search(args.query, top_k=args.top_k)
 
         if not results:
             output.info("No results found.")
@@ -211,7 +208,7 @@ def add_command(args: argparse.Namespace) -> int:
         backend = raglet._get_default_backend(str(output_path))
         if backend.supports_incremental():
             output.verbose_msg("Saving incrementally...")
-            raglet.save(str(output_path), incremental=True)
+        raglet.save(str(output_path), incremental=True)
         else:
             output.verbose_msg("Saving (full save, incremental not supported)...")
             raglet.save(str(output_path), incremental=False)
@@ -299,13 +296,13 @@ def main() -> int:
 Examples:
   # Build raglet from files (creates directory)
   raglet build file1.txt file2.md --out my-raglet/
-  raglet build ./docs                    # → raglet-out/
+  raglet build ./docs --out docs/
   raglet build "*.md" --out docs-kb/
 
   # Query raglet (works with any format)
-  raglet query --raglet my-raglet/ --q "python" --top-k 5
-  raglet query --raglet export.zip --q "python" --top-k 5
-  raglet query --raglet knowledge.sqlite --q "python" --top-k 5
+  raglet query "python" --raglet my-raglet/ --top-k 5
+  raglet query "python" --raglet export.zip --top-k 5
+  raglet query "python" --raglet knowledge.sqlite --top-k 5
 
   # Package (convert between formats)
   raglet package --raglet my-raglet/ --format zip --out export.zip
@@ -350,8 +347,8 @@ Examples:
     build_parser.add_argument(
         "--out",
         type=str,
-        default=None,
-        help="Output directory path (default: raglet-out/)",
+        required=True,
+        help="Output directory path (required)",
     )
     build_parser.add_argument(
         "--ignore",
@@ -387,16 +384,15 @@ Examples:
     # Query command
     query_parser = subparsers.add_parser("query", help="Query raglet (single query)")
     query_parser.add_argument(
+        "query",
+        type=str,
+        help="Search query",
+    )
+    query_parser.add_argument(
         "--raglet",
         type=str,
         required=True,
         help="Path to raglet (.zip, .sqlite, or directory)",
-    )
-    query_parser.add_argument(
-        "--q",
-        type=str,
-        required=True,
-        help="Search query",
     )
     query_parser.add_argument(
         "--top-k",

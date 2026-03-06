@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-unit test-integration test-e2e lint format format-check type-check coverage coverage-ci clean build dist publish publish-test ci venv check-uv benchmark docker-build docker-push docker-release
+.PHONY: help install install-dev test test-unit test-integration test-e2e test-performance lint format format-check type-check coverage coverage-ci clean build dist publish publish-test ci venv check-uv benchmark docker-build docker-push docker-release
 
 
 # Check if uv is available (checks at runtime, works even if uv was installed after Makefile was parsed)
@@ -18,6 +18,7 @@ help:
 	@echo "  test-unit       - Run unit tests only"
 	@echo "  test-integration - Run integration tests only"
 	@echo "  test-e2e        - Run end-to-end tests only"
+	@echo "  test-performance - Run performance tests (storage format benchmarks)"
 	@echo "  benchmark       - Benchmark embedding models (speed & accuracy)"
 	@echo "  lint            - Run linters (ruff)"
 	@echo "  format          - Format code (black)"
@@ -85,6 +86,22 @@ test-integration-debug: check-uv
 
 test-e2e: check-uv
 	uv run pytest -m e2e
+
+test-performance: check-uv
+	@echo "Running performance tests..."
+	@cd performance && \
+	uv run python performance_test.py \
+		--sizes 100 1000 10000 \
+		--formats sqlite directory \
+		--output performance_results.json || true
+	@echo ""
+	@echo "Performance test results:"
+	@cd performance && \
+	if [ -f performance_results.json ]; then \
+		uv run python parse_results.py; \
+	else \
+		echo "No results file generated."; \
+	fi
 
 benchmark: check-uv
 	@echo "Running embedding model benchmarks..."

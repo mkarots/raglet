@@ -49,12 +49,13 @@ class TestCLICommands:
     def test_build_command_handles_no_files(self):
         """Test build_command handles case with no matching files."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            Path(tmpdir)
+            workspace = Path(tmpdir)
+            output_path = workspace / "test.raglet"
 
             # Mock args
             args = MagicMock()
             args.inputs = []  # No inputs
-            args.out = None
+            args.out = str(output_path)
             args.ignore = ""
             args.max_files = None
             args.chunk_size = None
@@ -88,7 +89,7 @@ class TestCLICommands:
             # Mock args
             args = MagicMock()
             args.raglet = str(kb_path)
-            args.q = "Python"
+            args.query = "Python"
             args.top_k = 5
             args.show_full = False
 
@@ -271,7 +272,7 @@ class TestCLICommands:
             # Mock args
             args = MagicMock()
             args.raglet = str(kb_path)
-            args.q = "Python"
+            args.query = "Python"
             args.top_k = 5
             args.show_full = False
 

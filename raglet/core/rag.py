@@ -110,6 +110,8 @@ class RAGlet:
                 self.embeddings = embeddings
             else:
                 self.embeddings = self.embedding_generator.generate(chunks)
+
+            # Add vectors to vector store (vector store initialization)
             self.vector_store.add_vectors(self.embeddings, chunks)
         else:
             self.embeddings = np.array([]).reshape(0, self.embedding_generator.get_dimension())

@@ -284,13 +284,11 @@ class SQLiteStorageBackend(StorageBackend):
             # Load embeddings
             embeddings = self._load_embeddings(conn)
 
-            # Rebuild FAISS index
+            # Validate embedding dimension matches model dimension
             from raglet.embeddings.generator import SentenceTransformerGenerator
-            from raglet.vector_store.faiss_store import FAISSVectorStore
 
             embedding_generator = SentenceTransformerGenerator(config.embedding)
 
-            # Validate embedding dimension matches model dimension
             if len(embeddings) > 0:
                 saved_embedding_dim = embeddings.shape[1]
                 model_embedding_dim = embedding_generator.get_dimension()
@@ -304,24 +302,11 @@ class SQLiteStorageBackend(StorageBackend):
                         f"the saved embeddings."
                     )
 
-            vector_store = FAISSVectorStore(
-                embedding_dim=(
-                    embeddings.shape[1]
-                    if len(embeddings) > 0
-                    else embedding_generator.get_dimension()
-                ),
-                config=config.search,
-            )
-
-            if len(chunks) > 0:
-                vector_store.add_vectors(embeddings, chunks)
-
-            # Create RAGlet
+            # Create RAGlet (will rebuild FAISS index on init)
             return RAGlet(
                 chunks=chunks,
                 config=config,
                 embedding_generator=embedding_generator,
-                vector_store=vector_store,
                 embeddings=embeddings,
             )
         except Exception as e:
