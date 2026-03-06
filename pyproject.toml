@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "raglet"
-version = "0.2.1"
+version = "0.2.0"
 description = "Portable memory for small text corpora - create searchable .raglet files"
 readme = "README.md"
 requires-python = ">=3.9"
