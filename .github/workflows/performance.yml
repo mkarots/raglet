@@ -41,8 +41,8 @@ jobs:
       
       - name: Run performance tests
         id: performance
+        working-directory: experiments
         run: |
-          cd experiments
           python performance_test.py \
             --sizes 100 1000 10000 \
             --formats sqlite directory \
@@ -58,11 +58,13 @@ jobs:
             experiments/performance_results.json
             experiments/test_data/
           retention-days: 30
+          if-no-files-found: ignore
       
       - name: Parse and display results
         if: always()
+        working-directory: experiments
         run: |
-          if [ -f experiments/performance_results.json ]; then
+          if [ -f performance_results.json ]; then
             echo "## Performance Test Results" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "### Summary" >> $GITHUB_STEP_SUMMARY
@@ -73,7 +75,7 @@ jobs:
           import sys
           
           try:
-              with open('experiments/performance_results.json', 'r') as f:
+              with open('performance_results.json', 'r') as f:
                   results = json.load(f)
               
               if not results:

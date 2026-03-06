@@ -36,16 +36,11 @@ class TestCLIE2E:
             (workspace / "doc1.txt").write_text("Python is a programming language.")
             (workspace / "doc2.md").write_text("# Machine Learning\n\nML uses algorithms.")
 
-
             # Build knowledge base using Python API (simulating CLI)
 
             from raglet import RAGlet, RAGletConfig
 
-
-
             config = RAGletConfig()
-
-
 
             raglet = RAGlet.from_files(
                 [
@@ -55,29 +50,20 @@ class TestCLIE2E:
                 config=config,
             )
 
-
-
             raglet.save(str(kb_path))
-
 
             # Verify knowledge base created
 
             assert kb_path.exists()
 
-
             # Query using Python API (simulating CLI)
 
             loaded = RAGlet.load(str(kb_path))
 
-
-
             results = loaded.search("Python", top_k=1)
-
-
 
             assert len(results) > 0
             assert "python" in results[0].text.lower()
-
 
     def test_cli_incremental_add_workflow(self):
         """Test incremental add workflow."""

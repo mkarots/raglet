@@ -28,9 +28,7 @@ def build_command(args: argparse.Namespace) -> int:
     from raglet.utils import expand_file_inputs
 
     try:
-        ignore_patterns = (
-            args.ignore.split(",") if args.ignore else None
-        )
+        ignore_patterns = args.ignore.split(",") if args.ignore else None
         filtered_files = expand_file_inputs(args.inputs, ignore_patterns=ignore_patterns)
     except ValueError as e:
         output.error(str(e))
@@ -58,7 +56,9 @@ def build_command(args: argparse.Namespace) -> int:
 
     if parts:
         input_desc = ", ".join(parts)
-        output.info(f"Found {input_desc} ({len(filtered_files)} file{'s' if len(filtered_files) != 1 else ''} total)...")
+        output.info(
+            f"Found {input_desc} ({len(filtered_files)} file{'s' if len(filtered_files) != 1 else ''} total)..."
+        )
     else:
         output.info(f"Found {len(filtered_files)} files to process...")
 
@@ -84,7 +84,9 @@ def build_command(args: argparse.Namespace) -> int:
         # Limit files if specified
         files_to_process = filtered_files[: args.max_files] if args.max_files else filtered_files
         if args.max_files and len(files_to_process) < len(filtered_files):
-            output.info(f"  Processing {len(files_to_process)} of {len(filtered_files)} files (--max-files limit)")
+            output.info(
+                f"  Processing {len(files_to_process)} of {len(filtered_files)} files (--max-files limit)"
+            )
 
         # Build RAGlet
         raglet = RAGlet.from_files(files_to_process, config=config, output=output)
@@ -215,7 +217,9 @@ def add_command(args: argparse.Namespace) -> int:
             raglet.save(str(output_path), incremental=False)
 
         new_chunks = len(raglet.chunks) - initial_chunks
-        output.success(f"Added {len(files_to_add)} file{'s' if len(files_to_add) != 1 else ''} ({new_chunks} new chunks)")
+        output.success(
+            f"Added {len(files_to_add)} file{'s' if len(files_to_add) != 1 else ''} ({new_chunks} new chunks)"
+        )
         output.info(f"  Total chunks: {len(raglet.chunks)}")
         return 0
 
@@ -277,6 +281,7 @@ def package_command(args: argparse.Namespace) -> int:
         output.error(f"Packaging raglet failed: {e}")
         if getattr(args, "verbose", False):
             import traceback
+
             traceback.print_exc()
         return 1
 
@@ -450,7 +455,6 @@ Examples:
         help="Output path (default: source.{format})",
     )
 
-
     args = parser.parse_args()
 
     if not args.command:
@@ -467,7 +471,9 @@ Examples:
     # Warn about loading time (embedding models are heavy) - only if not quiet
     output = get_output()
     if not output.quiet:
-        output.warning("raglet is loading... Embedding models may take a few seconds to load on first use.")
+        output.warning(
+            "raglet is loading... Embedding models may take a few seconds to load on first use."
+        )
 
     # Route to command handler
     if args.command == "build":

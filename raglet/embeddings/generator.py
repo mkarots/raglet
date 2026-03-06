@@ -62,7 +62,9 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
                 # First time loading this model - create new instance
                 self._warn_model_loading(config.model)
                 try:
-                    _model_cache[cache_key] = SentenceTransformer(config.model, device=config.device)
+                    _model_cache[cache_key] = SentenceTransformer(
+                        config.model, device=config.device
+                    )
                 except Exception as e:
                     raise ValueError(f"Failed to load embedding model '{config.model}': {e}") from e
 
@@ -77,6 +79,7 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
         if output is None:
             try:
                 from raglet.cli_utils import get_output
+
                 output = get_output()
             except Exception:
                 # No CLI context available - silent (library usage)

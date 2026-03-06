@@ -18,7 +18,20 @@ if TYPE_CHECKING:
 
 # Default ignore patterns for file discovery
 # These patterns are excluded when processing directories or glob patterns
-DEFAULT_IGNORE_PATTERNS = [".git", "__pycache__", ".venv", "node_modules", ".raglet", "assets", "*.egg-info", "*.pyc", "*.pyo", "*.pyd", "*.pyw", "*.pyz"]
+DEFAULT_IGNORE_PATTERNS = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "node_modules",
+    ".raglet",
+    "assets",
+    "*.egg-info",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    "*.pyw",
+    "*.pyz",
+]
 
 
 class RAGlet:
@@ -51,7 +64,9 @@ class RAGlet:
 
         # Auto-save configuration
         self._auto_save_path: Optional[str] = auto_save_path
-        self._auto_save_threshold: int = auto_save_threshold if auto_save_threshold is not None else 1000
+        self._auto_save_threshold: int = (
+            auto_save_threshold if auto_save_threshold is not None else 1000
+        )
         self._unsaved_chars: int = 0
 
         # Register exit handler if auto-save enabled
@@ -156,12 +171,16 @@ class RAGlet:
         from raglet.processing.extractor_factory import create_extractor
 
         if output and filtered_files:
-            output.progress(f"Extracting text from {len(filtered_files)} file{'s' if len(filtered_files) != 1 else ''}...")
+            output.progress(
+                f"Extracting text from {len(filtered_files)} file{'s' if len(filtered_files) != 1 else ''}..."
+            )
 
         all_chunks = []
         for i, file_path in enumerate(filtered_files, 1):
             if output and i % max(1, len(filtered_files) // 10) == 0:
-                output.verbose_msg(f"  Processing file {i}/{len(filtered_files)}: {Path(file_path).name}")
+                output.verbose_msg(
+                    f"  Processing file {i}/{len(filtered_files)}: {Path(file_path).name}"
+                )
 
             if document_extractor is None:
                 extractor = create_extractor(file_path)
@@ -180,7 +199,9 @@ class RAGlet:
             all_chunks.extend(chunks)
 
         if output:
-            output.progress(f"Chunked text into {len(all_chunks)} chunk{'s' if len(all_chunks) != 1 else ''}...")
+            output.progress(
+                f"Chunked text into {len(all_chunks)} chunk{'s' if len(all_chunks) != 1 else ''}..."
+            )
             output.progress("Generating embeddings...")
 
         # Step 3 & 4: Generate embeddings and create vector store
@@ -341,7 +362,9 @@ class RAGlet:
             return
 
         if output:
-            output.progress(f"Extracting text from {len(files)} file{'s' if len(files) != 1 else ''}...")
+            output.progress(
+                f"Extracting text from {len(files)} file{'s' if len(files) != 1 else ''}..."
+            )
 
         # Extract and chunk files (similar to from_files logic)
         from raglet.processing.chunker import SentenceAwareChunker
@@ -370,7 +393,9 @@ class RAGlet:
             new_chunks.extend(chunks)
 
         if output:
-            output.progress(f"Chunked into {len(new_chunks)} chunk{'s' if len(new_chunks) != 1 else ''}...")
+            output.progress(
+                f"Chunked into {len(new_chunks)} chunk{'s' if len(new_chunks) != 1 else ''}..."
+            )
             output.progress("Generating embeddings...")
 
         # Add chunks (reuse add_chunks logic)

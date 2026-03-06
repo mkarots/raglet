@@ -39,7 +39,9 @@ class Colors:
 class CLIOutput:
     """CLI output formatter with color support and verbosity control."""
 
-    def __init__(self, quiet: bool = False, verbose: bool = False, use_colors: Optional[bool] = None):
+    def __init__(
+        self, quiet: bool = False, verbose: bool = False, use_colors: Optional[bool] = None
+    ):
         """Initialize CLI output formatter.
 
         Args:
@@ -178,7 +180,9 @@ class CLIOutput:
 _output: Optional[CLIOutput] = None
 
 
-def init_output(quiet: bool = False, verbose: bool = False, use_colors: Optional[bool] = None) -> None:
+def init_output(
+    quiet: bool = False, verbose: bool = False, use_colors: Optional[bool] = None
+) -> None:
     """Initialize global CLI output instance.
 
     Args:
