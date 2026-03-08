@@ -17,7 +17,7 @@ class TestChunkingConfig:
         """Test default configuration values."""
         config = ChunkingConfig()
 
-        assert config.size == 512
+        assert config.size == 256
         assert config.overlap == 50
         assert config.strategy == "sentence-aware"
 
@@ -31,7 +31,7 @@ class TestChunkingConfig:
 
     def test_validate_valid_config(self):
         """Test validation of valid config."""
-        config = ChunkingConfig(size=512, overlap=50)
+        config = ChunkingConfig(size=256, overlap=50)
         config.validate()  # Should not raise
 
     def test_validate_invalid_size(self):
@@ -71,7 +71,7 @@ class TestRAGletConfig:
         config = RAGletConfig()
 
         assert isinstance(config.chunking, ChunkingConfig)
-        assert config.chunking.size == 512
+        assert config.chunking.size == 256
         assert config.custom_metadata == {}
 
     def test_custom_chunking_config(self):
@@ -136,7 +136,7 @@ class TestConfigSerialization:
         """Test ChunkingConfig.from_dict() uses defaults."""
         config = ChunkingConfig.from_dict({})
 
-        assert config.size == 512
+        assert config.size == 256
         assert config.overlap == 50
         assert config.strategy == "sentence-aware"
 
@@ -276,7 +276,7 @@ class TestConfigSerialization:
         """Test RAGletConfig.from_dict() uses defaults for missing keys."""
         config = RAGletConfig.from_dict({})
 
-        assert config.chunking.size == 512
+        assert config.chunking.size == 256
         assert config.embedding.model == "all-MiniLM-L6-v2"
         assert config.search.default_top_k == 5
         assert config.custom_metadata == {}

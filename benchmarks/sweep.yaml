@@ -1,0 +1,45 @@
+# Default benchmark sweep configuration.
+#
+# Each benchmark has a `script` path (relative to repo root) and an
+# optional `grid` of parameters.  Every combination in the grid
+# produces one subprocess invocation.  Non-list values are fixed.
+#
+# Usage:
+#   uv run python benchmarks/sweep.py
+#   uv run python benchmarks/sweep.py --only latency,embedding-throughput
+#   uv run python benchmarks/sweep.py --dry-run
+
+benchmarks:
+
+  storage-performance:
+    script: benchmarks/storage-performance/run.py
+    grid:
+      sizes:
+        - [0.1, 1.0]
+        - [0.1, 1.0, 5.0]
+      formats:
+        - [sqlite, directory]
+
+  latency:
+    script: benchmarks/latency/run.py
+    grid:
+      runs: [10, 20]
+      format: [sqlite, directory]
+
+  embedding-throughput:
+    script: benchmarks/embedding-throughput/run.py
+    grid:
+      runs: [3, 5]
+
+  measure-suite:
+    script: benchmarks/measure-suite/run.py
+    grid:
+      chunks: [1000, 5000]
+      skip-startup: [true]
+      no-memory: [true]
+
+  cprofile-analysis:
+    script: benchmarks/cprofile-analysis/run.py
+    grid:
+      size: [1000, 5000]
+      search-queries: [20]

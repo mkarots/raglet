@@ -54,7 +54,7 @@ def _default_fp16() -> bool:
 class ChunkingConfig:
     """Configuration for text chunking."""
 
-    size: int = 512
+    size: int = 256
     overlap: int = 50
     strategy: str = "sentence-aware"
 
@@ -96,7 +96,7 @@ class ChunkingConfig:
             ChunkingConfig instance
         """
         return cls(
-            size=data.get("size", 512),
+            size=data.get("size", 256),
             overlap=data.get("overlap", 50),
             strategy=data.get("strategy", "sentence-aware"),
         )

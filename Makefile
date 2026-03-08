@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-unit test-integration test-e2e test-performance lint format format-check type-check coverage coverage-ci clean build dist publish publish-test ci venv check-uv benchmark benchmark-sweep docker-build docker-push docker-release smoke smoke-dev
+.PHONY: help install install-dev test test-unit test-integration test-e2e test-performance lint format format-check type-check coverage coverage-ci clean build dist publish publish-test ci venv check-uv benchmark benchmark-sweep benchmark-report docker-build docker-push docker-release smoke smoke-dev
 
 
 # Check if uv is available (checks at runtime, works even if uv was installed after Makefile was parsed)
@@ -21,6 +21,7 @@ help:
 	@echo "  test-performance - Run storage format performance tests"
 	@echo "  benchmark       - Run embedding throughput benchmark"
 	@echo "  benchmark-sweep - Run all benchmarks with parameter sweeps (YAML config)"
+	@echo "  benchmark-report - Generate markdown benchmark report from results JSON"
 	@echo "  lint            - Run linters (ruff)"
 	@echo "  format          - Format code (black)"
 	@echo "  format-check    - Check formatting without modifying"
@@ -121,6 +122,14 @@ benchmark: check-uv
 SWEEP_CONFIG ?= benchmarks/sweep.yaml
 benchmark-sweep: check-uv
 	uv run python benchmarks/sweep.py --config $(SWEEP_CONFIG) $(SWEEP_ARGS)
+
+# Report: generate markdown from existing benchmark JSON results
+# Usage: make benchmark-report
+#        make benchmark-report REPORT_ARGS="--baseline benchmarks/baselines/v0.2.0.json"
+#        make benchmark-report REPORT_ARGS="--output BENCHMARK_REPORT.md"
+#        make benchmark-report REPORT_ARGS="--save-baseline benchmarks/baselines/v0.3.0.json"
+benchmark-report: check-uv
+	uv run python benchmarks/report.py $(REPORT_ARGS)
 
 lint: check-uv
 	uv run ruff check raglet tests

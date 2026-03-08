@@ -29,7 +29,7 @@ class TestSearchAccuracy:
         content_parts = []
 
         # Add filler content to push specific topics to known chunk positions
-        # Using chunk_size=512, we expect ~1-2 chunks per section
+        # Using chunk_size=256, we expect ~2-4 chunks per section
 
         # Chunks 0-2: General filler
         content_parts.extend(

@@ -1,0 +1,33 @@
+# Quick sweep — minimal parameters, fast feedback.
+#
+# Usage:
+#   uv run python benchmarks/sweep.py --config benchmarks/sweep-quick.yaml
+
+benchmarks:
+
+  storage-performance:
+    script: benchmarks/storage-performance/run.py
+    grid:
+      sizes:
+        - [0.1]
+      formats:
+        - [sqlite]
+
+  latency:
+    script: benchmarks/latency/run.py
+    grid:
+      runs: [5]
+      format: [sqlite]
+
+  embedding-throughput:
+    script: benchmarks/embedding-throughput/run.py
+    grid:
+      runs: [2]
+
+  measure-suite:
+    script: benchmarks/measure-suite/run.py
+    grid:
+      chunks: [500]
+      embed-sizes: ["100,500"]
+      skip-startup: [true]
+      no-memory: [true]

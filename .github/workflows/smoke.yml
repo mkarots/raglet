@@ -1,0 +1,39 @@
+name: Smoke Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: 'Python version for the base image'
+        required: false
+        default: '3.11'
+        type: choice
+        options:
+          - '3.10'
+          - '3.11'
+          - '3.12'
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    name: Smoke tests (Python ${{ inputs.python_version || '3.11' }})
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build smoke test image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./smoke
+          push: false
+          load: true
+          tags: raglet-smoke:test
+          build-args: |
+            PYTHON_VERSION=${{ inputs.python_version || '3.11' }}
+
+      - name: Run smoke tests
+        run: docker run --rm raglet-smoke:test

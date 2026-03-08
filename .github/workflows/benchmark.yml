@@ -1,0 +1,110 @@
+name: Benchmarks
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        version: "latest"
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Cache uv packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/uv
+        key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-
+
+    - name: Install dependencies
+      run: make install-dev
+
+    - name: Run embedding throughput benchmark
+      run: |
+        uv run python benchmarks/embedding-throughput/run.py \
+          --runs 3 \
+          --sizes 0.005 0.01 0.05 0.1 0.5 1.0 2.0 \
+          --output benchmarks/embedding-throughput/results.json
+
+    - name: Run latency benchmark
+      run: |
+        uv run python benchmarks/latency/run.py \
+          --runs 10 \
+          --output benchmarks/latency/results.json
+
+    - name: Generate benchmark report
+      run: |
+        uv run python benchmarks/report.py \
+          --output benchmarks/BENCHMARK_REPORT.md
+
+    - name: Upload benchmark artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: |
+          benchmarks/embedding-throughput/results.json
+          benchmarks/latency/results.json
+          benchmarks/BENCHMARK_REPORT.md
+        retention-days: 90
+
+    - name: Attach results to GitHub Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        TAG="${GITHUB_REF#refs/tags/}"
+
+        # Wait for the release to exist (release.yml may still be creating it)
+        for i in 1 2 3 4 5; do
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            break
+          fi
+          echo "Release $TAG not found yet, waiting 30s... (attempt $i/5)"
+          sleep 30
+        done
+
+        if ! gh release view "$TAG" >/dev/null 2>&1; then
+          echo "Release $TAG not found after waiting. Creating it."
+          gh release create "$TAG" --title "$TAG" --generate-notes
+        fi
+
+        gh release upload "$TAG" \
+          benchmarks/embedding-throughput/results.json#embedding-throughput.json \
+          benchmarks/latency/results.json#latency.json \
+          benchmarks/BENCHMARK_REPORT.md#BENCHMARK_REPORT.md \
+          --clobber
+
+        # Build updated release body with benchmark section appended.
+        # Uses a temp file to avoid multiline shell-quoting issues.
+        gh release view "$TAG" --json body -q '.body' > /tmp/release_body.txt
+
+        # Strip any previous benchmark section (idempotent re-runs)
+        sed -i '/<!-- benchmark-results -->/,$d' /tmp/release_body.txt
+
+        # Append benchmark section
+        printf '\n---\n<!-- benchmark-results -->\n\n' >> /tmp/release_body.txt
+        printf '<details>\n<summary>Benchmark results (CPU, GitHub Actions)</summary>\n\n' >> /tmp/release_body.txt
+        cat benchmarks/BENCHMARK_REPORT.md >> /tmp/release_body.txt
+        printf '\n> These numbers are from GitHub Actions (CPU-only). Local results on\n' >> /tmp/release_body.txt
+        printf '> GPU (MPS/CUDA) will be significantly faster for embedding throughput.\n\n' >> /tmp/release_body.txt
+        printf '</details>\n' >> /tmp/release_body.txt
+
+        gh release edit "$TAG" --notes-file /tmp/release_body.txt
+        echo "Benchmark report attached to release $TAG"

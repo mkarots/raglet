@@ -382,7 +382,7 @@ Examples:
         "--chunk-size",
         type=int,
         default=None,
-        help="Chunk size (default: 512)",
+        help="Chunk size in tokens (default: 256)",
     )
     build_parser.add_argument(
         "--chunk-overlap",
