@@ -72,3 +72,6 @@ benchmarks/*/_bench_tmp/
 benchmarks/cprofile-analysis/profile_results/
 *.prof
 *.dat
+evaluation/
+output.raglet/
+data/
