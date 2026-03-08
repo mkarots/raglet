@@ -29,7 +29,7 @@ class TestCLIE2E:
         with tempfile.TemporaryDirectory() as tmpdir:
 
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
 
             # Create test files
 
@@ -69,7 +69,7 @@ class TestCLIE2E:
         """Test incremental add workflow."""
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
 
             # Create initial knowledge base
             from raglet import RAGlet, RAGletConfig
@@ -105,7 +105,7 @@ class TestCLIE2E:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
             zip_path = workspace / "export.zip"
 
             # Create knowledge base
@@ -140,7 +140,7 @@ class TestCLIE2E:
         """Test multi-session workflow (simulating agent memory use case)."""
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
 
             # Session 1: Create initial memory
             from raglet import RAGlet, RAGletConfig

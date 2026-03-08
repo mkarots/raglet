@@ -26,6 +26,7 @@ def _cleanup_torch_workers() -> None:
     """
     try:
         import torch.multiprocessing as mp
+
         for proc in mp.active_children():
             proc.terminate()
             proc.join(timeout=1)
@@ -210,7 +211,7 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
             texts,
             normalize_embeddings=False,  # FAISS normalises before indexing
             show_progress_bar=True,
-            convert_to_numpy=True,       # avoids an extra tensor→ndarray conversion
+            convert_to_numpy=True,  # avoids an extra tensor→ndarray conversion
             batch_size=self.config.batch_size,
         )
 
@@ -222,7 +223,6 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
         output[:] = batch_embeddings
         return output  # type: ignore[no-any-return]
 
-
     def generate_single(self, text: str) -> np.ndarray:
         """Generate embedding for a single text string.
 
@@ -233,7 +233,7 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
             NumPy array of shape (embedding_dim,) with embedding
         """
         embedding = self.model.encode(
-            text[:self._char_limit],
+            text[: self._char_limit],
             normalize_embeddings=False,  # FAISS normalises before indexing
             show_progress_bar=False,
         )
@@ -254,7 +254,7 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
         which may cause semaphore leak warnings. These are harmless warnings that
         don't affect functionality - loky executors are cleaned up at process shutdown.
         """
-        if not hasattr(self, 'model') or self.model is None:
+        if not hasattr(self, "model") or self.model is None:
             return
 
         # Clear reference (but don't remove from cache if cached)
@@ -281,9 +281,9 @@ def clear_model_cache() -> None:
         for model in _model_cache.values():
             try:
                 # Attempt cleanup similar to SentenceTransformerGenerator.close()
-                if hasattr(model, '_modules'):
+                if hasattr(model, "_modules"):
                     for module in model._modules.values():
-                        if hasattr(module, 'shutdown'):
+                        if hasattr(module, "shutdown"):
                             try:
                                 module.shutdown(wait=True)
                             except Exception:

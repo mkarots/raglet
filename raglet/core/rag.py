@@ -23,7 +23,6 @@ DEFAULT_IGNORE_PATTERNS = [
     "__pycache__",
     ".venv",
     "node_modules",
-    ".raglet",
     "assets",
     "*.egg-info",
     "*.pyc",
@@ -656,13 +655,13 @@ class RAGlet:
             return
 
         # Close vector store (frees FAISS C++ memory)
-        if hasattr(self, 'vector_store') and self.vector_store is not None:
-            if hasattr(self.vector_store, 'close'):
+        if hasattr(self, "vector_store") and self.vector_store is not None:
+            if hasattr(self.vector_store, "close"):
                 self.vector_store.close()
 
         # Close embedding generator (shuts down loky executor if applicable)
-        if hasattr(self, 'embedding_generator') and self.embedding_generator is not None:
-            if hasattr(self.embedding_generator, 'close'):
+        if hasattr(self, "embedding_generator") and self.embedding_generator is not None:
+            if hasattr(self.embedding_generator, "close"):
                 self.embedding_generator.close()
 
         # Clear references to help GC
@@ -678,7 +677,7 @@ class RAGlet:
         can prevent it entirely. Prefer explicit close() for deterministic cleanup.
         """
         try:
-            if hasattr(self, '_closed') and not self._closed:
+            if hasattr(self, "_closed") and not self._closed:
                 self.close()
         except Exception:
             # Silently ignore errors during destruction

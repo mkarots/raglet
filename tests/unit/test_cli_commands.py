@@ -144,6 +144,8 @@ class TestCLICommands:
             args.raglet = str(kb_path)
             args.files = [str(new_file)]
             args.out = None
+            args.ignore = None
+            args.max_files = None
 
             # Run add command
             result = add_command(args)
@@ -153,6 +155,157 @@ class TestCLICommands:
             # Verify file added
             loaded = RAGlet.load(str(kb_path))
             assert len(loaded.chunks) > len(chunks)
+
+    def test_add_command_accepts_directory(self):
+        """Test add_command accepts a directory input."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workspace = Path(tmpdir)
+            kb_path = workspace / "kb"
+
+            from raglet import RAGlet
+
+            # Create initial raglet from a dummy file
+            init_file = workspace / "init.txt"
+            init_file.write_text("Initial content for raglet.")
+            raglet = RAGlet.from_files([str(init_file)])
+            raglet.save(str(kb_path))
+            initial_count = len(raglet.chunks)
+
+            # Create a directory with new files
+            new_dir = workspace / "new_docs"
+            new_dir.mkdir()
+            (new_dir / "a.txt").write_text("Alpha content about searching.")
+            (new_dir / "b.txt").write_text("Beta content about indexing.")
+
+            args = MagicMock()
+            args.raglet = str(kb_path)
+            args.files = [str(new_dir)]
+            args.out = None
+            args.ignore = None
+            args.max_files = None
+
+            result = add_command(args)
+
+            assert result == 0
+
+            loaded = RAGlet.load(str(kb_path))
+            assert len(loaded.chunks) > initial_count
+
+    def test_add_command_accepts_glob(self):
+        """Test add_command accepts glob patterns."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workspace = Path(tmpdir)
+            kb_path = workspace / "kb"
+
+            from raglet import RAGlet
+
+            init_file = workspace / "init.txt"
+            init_file.write_text("Initial content for raglet.")
+            raglet = RAGlet.from_files([str(init_file)])
+            raglet.save(str(kb_path))
+            initial_count = len(raglet.chunks)
+
+            # Create files matching a glob
+            (workspace / "note_1.md").write_text("First note about embeddings.")
+            (workspace / "note_2.md").write_text("Second note about vectors.")
+            (workspace / "ignore.txt").write_text("Should not be matched by *.md")
+
+            args = MagicMock()
+            args.raglet = str(kb_path)
+            args.files = [str(workspace / "*.md")]
+            args.out = None
+            args.ignore = None
+            args.max_files = None
+
+            result = add_command(args)
+
+            assert result == 0
+
+            loaded = RAGlet.load(str(kb_path))
+            assert len(loaded.chunks) > initial_count
+            sources = [c.source for c in loaded.chunks]
+            assert not any("ignore.txt" in s for s in sources)
+
+    def test_add_command_respects_ignore(self):
+        """Test add_command --ignore filters out matching files."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workspace = Path(tmpdir)
+            kb_path = workspace / "kb"
+
+            from raglet import RAGlet
+
+            init_file = workspace / "init.txt"
+            init_file.write_text("Initial content for raglet.")
+            raglet = RAGlet.from_files([str(init_file)])
+            raglet.save(str(kb_path))
+
+            new_dir = workspace / "src"
+            new_dir.mkdir()
+            (new_dir / "app.py").write_text("Application code content.")
+            cache_dir = new_dir / "__pycache__"
+            cache_dir.mkdir()
+            (cache_dir / "app.pyc").write_text("bytecode")
+
+            args = MagicMock()
+            args.raglet = str(kb_path)
+            args.files = [str(new_dir)]
+            args.out = None
+            args.ignore = "__pycache__"
+            args.max_files = None
+
+            result = add_command(args)
+
+            assert result == 0
+
+            loaded = RAGlet.load(str(kb_path))
+            sources = [c.source for c in loaded.chunks]
+            assert not any("__pycache__" in s for s in sources)
+
+    def test_add_command_respects_max_files(self):
+        """Test add_command --max-files limits files processed."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workspace = Path(tmpdir)
+            kb_path = workspace / "kb"
+
+            from raglet import RAGlet
+
+            init_file = workspace / "init.txt"
+            init_file.write_text("Initial content for raglet.")
+            raglet = RAGlet.from_files([str(init_file)])
+            raglet.save(str(kb_path))
+
+            new_dir = workspace / "docs"
+            new_dir.mkdir()
+            for i in range(5):
+                (new_dir / f"doc_{i}.txt").write_text(f"Document {i} content about topic {i}.")
+
+            args = MagicMock()
+            args.raglet = str(kb_path)
+            args.files = [str(new_dir)]
+            args.out = None
+            args.ignore = None
+            args.max_files = 2
+
+            result = add_command(args)
+            assert result == 0
+
+            loaded_limited = RAGlet.load(str(kb_path))
+
+            # Compare: add all 5 files without limit
+            raglet2 = RAGlet.from_files([str(init_file)])
+            raglet2.save(str(kb_path))
+
+            args2 = MagicMock()
+            args2.raglet = str(kb_path)
+            args2.files = [str(new_dir)]
+            args2.out = None
+            args2.ignore = None
+            args2.max_files = None
+
+            add_command(args2)
+            loaded_all = RAGlet.load(str(kb_path))
+
+            assert len(loaded_limited.chunks) < len(loaded_all.chunks)
 
     def test_add_command_handles_missing_raglet(self):
         """Test add_command handles missing raglet."""
@@ -169,6 +322,8 @@ class TestCLICommands:
             args.raglet = str(kb_path)
             args.files = [str(test_file)]
             args.out = None
+            args.ignore = None
+            args.max_files = None
 
             # Run add command (should fail)
             result = add_command(args)
@@ -179,7 +334,7 @@ class TestCLICommands:
         """Test package_command creates zip file."""
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
             zip_path = workspace / "export.zip"
 
             # Create knowledge base

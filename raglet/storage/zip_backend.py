@@ -62,11 +62,11 @@ class ZipStorageBackend(StorageBackend):
         with zipfile.ZipFile(str(file_path), "w", zipfile.ZIP_DEFLATED) as zipf:
             # Save config
             config_dict = raglet.config.to_dict()
-            zipf.writestr("config.json", json.dumps(config_dict, separators=(',', ':')))
+            zipf.writestr("config.json", json.dumps(config_dict, separators=(",", ":")))
 
             # Save chunks
             chunks_data = [chunk.to_dict() for chunk in raglet.chunks]
-            zipf.writestr("chunks.json", json.dumps(chunks_data, separators=(',', ':')))
+            zipf.writestr("chunks.json", json.dumps(chunks_data, separators=(",", ":")))
 
             # Save embeddings using in-memory buffer
             buf = io.BytesIO()
@@ -80,7 +80,7 @@ class ZipStorageBackend(StorageBackend):
                 "embedding_dim": raglet.embeddings.shape[1] if len(raglet.embeddings) > 0 else 0,
                 "embedding_model": raglet.config.embedding.model,
             }
-            zipf.writestr("metadata.json", json.dumps(metadata, separators=(',', ':')))
+            zipf.writestr("metadata.json", json.dumps(metadata, separators=(",", ":")))
 
     def load(self, file_path: str) -> RAGlet:
         """Load RAGlet from zip archive.

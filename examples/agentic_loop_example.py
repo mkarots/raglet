@@ -87,8 +87,7 @@ def agentic_loop_example(memory_path: Optional[str] = None):
     if memory_path:
         memory_file = Path(memory_path)
     else:
-        # Default to directory format (.raglet/)
-        memory_file = Path(".raglet")
+        memory_file = Path("memory")
     
     if memory_file.exists():
         print(f"📂 Loading existing memory from {memory_file}...")

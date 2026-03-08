@@ -68,13 +68,13 @@ class DirectoryStorageBackend(StorageBackend):
         # Save config.json
         config_path = dir_path / "config.json"
         with open(config_path, "w") as f:
-            json.dump(raglet.config.to_dict(), f, separators=(',', ':'))
+            json.dump(raglet.config.to_dict(), f, separators=(",", ":"))
 
         # Save chunks.json
         chunks_path = dir_path / "chunks.json"
         chunks_data = [chunk.to_dict() for chunk in raglet.chunks]
         with open(chunks_path, "w") as f:
-            json.dump(chunks_data, f, separators=(',', ':'))
+            json.dump(chunks_data, f, separators=(",", ":"))
 
         # Save embeddings.npy — read from FAISS to avoid materialising the
         # lazy ``raglet.embeddings`` property (which would vstack all chunks
@@ -100,7 +100,7 @@ class DirectoryStorageBackend(StorageBackend):
             "embedding_model": raglet.config.embedding.model,
         }
         with open(metadata_path, "w") as f:
-            json.dump(metadata, f, separators=(',', ':'))
+            json.dump(metadata, f, separators=(",", ":"))
 
     def _add_chunks_incremental(self, dir_path: Path, raglet: RAGlet) -> None:
         """Add chunks incrementally to existing directory.
@@ -139,7 +139,7 @@ class DirectoryStorageBackend(StorageBackend):
         # Save updated chunks
         chunks_data = [chunk.to_dict() for chunk in updated_chunks]
         with open(chunks_path, "w") as f:
-            json.dump(chunks_data, f, separators=(',', ':'))
+            json.dump(chunks_data, f, separators=(",", ":"))
 
         # Append embeddings efficiently using memory-mapped append
         # Instead of loading everything, we append only the new embeddings
@@ -151,16 +151,20 @@ class DirectoryStorageBackend(StorageBackend):
         if embeddings_path.exists():
             # Use memory-mapped file to append without loading everything into memory
             # Load existing file in memory-mapped mode (read-only)
-            existing_embeddings = np.load(str(embeddings_path), mmap_mode='r')
+            existing_embeddings = np.load(str(embeddings_path), mmap_mode="r")
 
             # Create new array with combined size
             total_count = len(existing_embeddings) + len(new_embeddings)
-            embedding_dim = existing_embeddings.shape[1] if len(existing_embeddings) > 0 else raglet.embedding_generator.get_dimension()
+            embedding_dim = (
+                existing_embeddings.shape[1]
+                if len(existing_embeddings) > 0
+                else raglet.embedding_generator.get_dimension()
+            )
 
             # Allocate new array and copy existing + new
             updated_embeddings = np.empty((total_count, embedding_dim), dtype=np.float32)
-            updated_embeddings[:len(existing_embeddings)] = existing_embeddings
-            updated_embeddings[len(existing_embeddings):] = new_embeddings
+            updated_embeddings[: len(existing_embeddings)] = existing_embeddings
+            updated_embeddings[len(existing_embeddings) :] = new_embeddings
 
             # Close memory-mapped file
             del existing_embeddings
@@ -186,7 +190,7 @@ class DirectoryStorageBackend(StorageBackend):
             metadata["version"] = self.VERSION
 
         with open(metadata_path, "w") as f:
-            json.dump(metadata, f, separators=(',', ':'))
+            json.dump(metadata, f, separators=(",", ":"))
 
     def load(self, file_path: str) -> RAGlet:
         """Load RAGlet from directory structure.
@@ -304,7 +308,7 @@ class DirectoryStorageBackend(StorageBackend):
         # Save updated chunks
         chunks_data = [chunk.to_dict() for chunk in updated_chunks]
         with open(chunks_path, "w") as f:
-            json.dump(chunks_data, f, separators=(',', ':'))
+            json.dump(chunks_data, f, separators=(",", ":"))
 
         # Append embeddings
         embeddings_path = dir_path / "embeddings.npy"
@@ -346,4 +350,4 @@ class DirectoryStorageBackend(StorageBackend):
             metadata["version"] = self.VERSION
 
         with open(metadata_path, "w") as f:
-            json.dump(metadata, f, separators=(',', ':'))
+            json.dump(metadata, f, separators=(",", ":"))

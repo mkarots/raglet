@@ -20,10 +20,10 @@ Usage:
     python examples/chat_cli_example.py --raglet knowledge.sqlite
 
     # With API key flag
-    python examples/chat_cli_example.py --raglet .raglet/ --api-key sk-...
+    python examples/chat_cli_example.py --raglet my-kb/ --api-key sk-...
 
     # Docker example
-    docker run -it -v $(pwd):/data -e ANTHROPIC_API_KEY=sk-... raglet python examples/chat_cli_example.py --raglet /data/.raglet/
+    docker run -it -v $(pwd):/data -e ANTHROPIC_API_KEY=sk-... raglet python examples/chat_cli_example.py --raglet /data/my-kb/
 """
 
 import argparse

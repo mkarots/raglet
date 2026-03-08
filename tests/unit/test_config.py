@@ -143,7 +143,11 @@ class TestConfigSerialization:
     def test_embedding_config_to_dict(self):
         """Test EmbeddingConfig.to_dict()."""
         config = EmbeddingConfig(
-            model="test-model", batch_size=64, device="cuda", normalize=True, use_fp16=False,
+            model="test-model",
+            batch_size=64,
+            device="cuda",
+            normalize=True,
+            use_fp16=False,
         )
         data = config.to_dict()
 

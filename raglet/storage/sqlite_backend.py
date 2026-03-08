@@ -95,18 +95,13 @@ class SQLiteStorageBackend(StorageBackend):
                     ),
                 )
 
-            chunk_ids = [
-                row[0] for row in conn.execute("SELECT id FROM chunks ORDER BY id")
-            ]
+            chunk_ids = [row[0] for row in conn.execute("SELECT id FROM chunks ORDER BY id")]
 
             for start in range(0, n, batch):
                 end = min(start + batch, n)
                 conn.executemany(
                     "INSERT INTO embeddings (chunk_id, embedding) VALUES (?, ?)",
-                    (
-                        (chunk_ids[i], all_vectors[i].tobytes())
-                        for i in range(start, end)
-                    ),
+                    ((chunk_ids[i], all_vectors[i].tobytes()) for i in range(start, end)),
                 )
 
         # Always save metadata (even for empty RAGlet)

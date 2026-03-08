@@ -62,8 +62,13 @@ dmypy.json
 .ruff_cache/
 
 # Project specific
-*.raglet
 test_files/
 temp/
 .benedict.method.yaml
 .metadata.benedict
+
+# Benchmark temp/output
+benchmarks/*/_bench_tmp/
+benchmarks/cprofile-analysis/profile_results/
+*.prof
+*.dat

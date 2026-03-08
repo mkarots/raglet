@@ -202,20 +202,23 @@ while True:
         unsaved = 0
 ```
 
-### Incremental updates
+### Incremental updates (cheap appends)
+
+The initial `from_files()` is the expensive step — it embeds all the text. After that, appending new content only embeds the **new** chunks. A 100 KB file appends in ~0.3s regardless of how large the existing raglet is.
 
 ```python
-# Add raw text
-rag.add_text("Some text", source="manual")
-rag.add_text("More context", source="chat", metadata={"session": "abc"})
-
-# Add files
+# Add files (only new content is embedded)
 rag.add_file("new_doc.txt")
 rag.add_files(["file1.txt", "file2.md"])
 
-# Save with incremental flag
+# Add raw text
+rag.add_text("Some text", source="manual")
+
+# Save incrementally (only writes new data)
 rag.save(".raglet/", incremental=True)
 ```
+
+See [Usage Patterns](docs/USAGE_PATTERNS.md) for the full build-once-append-search workflow.
 
 ---
 

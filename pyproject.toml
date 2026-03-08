@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "raglet"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Portable memory for small text corpora - create searchable .raglet files"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -87,6 +87,8 @@ include = '\.pyi?$'
 [tool.ruff]
 line-length = 100
 target-version = "py39"
+
+[tool.ruff.lint]
 select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
@@ -101,8 +103,9 @@ ignore = [
     "B008",  # do not perform function calls in argument defaults
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # unused imports
+"raglet/embeddings/generator.py" = ["E402"]  # PyTorch must init before FAISS
 
 [tool.mypy]
 python_version = "3.9"

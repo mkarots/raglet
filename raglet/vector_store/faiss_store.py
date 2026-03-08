@@ -61,8 +61,8 @@ class FAISSVectorStore(VectorStore):
                 f"store dimension ({self.embedding_dim})"
             )
 
-        if vectors.dtype != np.float32 or not vectors.flags['C_CONTIGUOUS']:
-            vectors = np.asarray(vectors, dtype=np.float32, order='C')
+        if vectors.dtype != np.float32 or not vectors.flags["C_CONTIGUOUS"]:
+            vectors = np.asarray(vectors, dtype=np.float32, order="C")
 
         _normalize_l2(vectors)
         self.index.add(vectors)
@@ -88,8 +88,8 @@ class FAISSVectorStore(VectorStore):
                 f"match store dimension ({self.embedding_dim})"
             )
 
-        if query_vector.dtype != np.float32 or not query_vector.flags['C_CONTIGUOUS']:
-            query_vector = np.asarray(query_vector, dtype=np.float32, order='C')
+        if query_vector.dtype != np.float32 or not query_vector.flags["C_CONTIGUOUS"]:
+            query_vector = np.asarray(query_vector, dtype=np.float32, order="C")
         query_vector = query_vector.reshape(1, -1)
 
         _normalize_l2(query_vector)

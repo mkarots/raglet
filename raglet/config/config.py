@@ -165,8 +165,7 @@ class EmbeddingConfig:
                     self.use_fp16 = False
             except ImportError:
                 warnings.warn(
-                    "device='cuda' requested but PyTorch is not installed. "
-                    "Falling back to CPU.",
+                    "device='cuda' requested but PyTorch is not installed. " "Falling back to CPU.",
                     stacklevel=2,
                 )
                 self.device = "cpu"
@@ -178,16 +177,14 @@ class EmbeddingConfig:
 
                 if not (torch.backends.mps.is_available() and torch.backends.mps.is_built()):
                     warnings.warn(
-                        "device='mps' requested but MPS is not available. "
-                        "Falling back to CPU.",
+                        "device='mps' requested but MPS is not available. " "Falling back to CPU.",
                         stacklevel=2,
                     )
                     self.device = "cpu"
                     self.use_fp16 = False
             except ImportError:
                 warnings.warn(
-                    "device='mps' requested but PyTorch is not installed. "
-                    "Falling back to CPU.",
+                    "device='mps' requested but PyTorch is not installed. " "Falling back to CPU.",
                     stacklevel=2,
                 )
                 self.device = "cpu"

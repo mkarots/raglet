@@ -17,7 +17,7 @@ class TestCLI:
         """Test 'build' command creates knowledge base."""
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
 
             # Create test files
             (workspace / "test1.txt").write_text("Python is a programming language.")
@@ -46,7 +46,7 @@ class TestCLI:
         """Test 'query' command returns search results."""
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
 
             # Create and save knowledge base
             chunks = [
@@ -71,7 +71,7 @@ class TestCLI:
         """Test 'add' command adds files incrementally."""
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
 
             # Create initial knowledge base
             chunks = [
@@ -104,7 +104,7 @@ class TestCLI:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
             zip_path = workspace / "export.zip"
 
             # Create knowledge base
@@ -138,7 +138,7 @@ class TestCLI:
         """Test 'inspect' command shows knowledge base information."""
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
 
             # Create knowledge base
             chunks = [
@@ -170,7 +170,7 @@ class TestCLI:
         """Test 'build' command with custom chunk size and model."""
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
 
             # Create test file
             (workspace / "test.txt").write_text("Python is a programming language. " * 100)
@@ -195,7 +195,7 @@ class TestCLI:
         """Test 'query' command respects top_k parameter."""
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
 
             # Create knowledge base with multiple chunks
             chunks = [
@@ -219,7 +219,7 @@ class TestCLI:
         """Test incremental save preserves existing chunks."""
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
 
             # Create initial knowledge base
             chunks1 = [
@@ -252,7 +252,7 @@ class TestCLI:
         """Test 'build' command ignores specified patterns."""
         with tempfile.TemporaryDirectory() as tmpdir:
             workspace = Path(tmpdir)
-            kb_path = workspace / ".raglet"
+            kb_path = workspace / "kb"
 
             # Create files
             (workspace / "include.txt").write_text("Include this.")

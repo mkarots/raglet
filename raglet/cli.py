@@ -154,6 +154,8 @@ def query_command(args: argparse.Namespace) -> int:
 def add_command(args: argparse.Namespace) -> int:
     """Add files to existing raglet.
 
+    Accepts files, directories, and glob patterns — identical to build.
+
     Args:
         args: Parsed command-line arguments
 
@@ -169,42 +171,55 @@ def add_command(args: argparse.Namespace) -> int:
         return 1
 
     if not args.files:
-        output.error("No files specified to add.")
+        output.error("No inputs specified to add.")
         return 1
 
-    # Resolve file paths
-    files_to_add = []
-    for file_arg in args.files:
-        file_path = Path(file_arg)
-        if file_path.exists() and file_path.is_file():
-            files_to_add.append(str(file_path))
-            output.info(f"Adding file: {file_path}")
-        else:
-            output.warning(f"File not found: {file_path}")
-
-    if not files_to_add:
-        output.error("No valid files to add.")
-        return 1
+    from raglet.utils import expand_file_inputs
 
     try:
-        # Load existing RAGlet
+        ignore_patterns = args.ignore.split(",") if args.ignore else None
+        files_to_add = expand_file_inputs(args.files, ignore_patterns=ignore_patterns)
+    except ValueError as e:
+        output.error(str(e))
+        return 1
+
+    if args.max_files:
+        files_to_add = files_to_add[: args.max_files]
+
+    dirs = [f for f in args.files if Path(f).is_dir()]
+    file_inputs = [f for f in args.files if Path(f).is_file()]
+    globs = [f for f in args.files if not Path(f).exists() and ("*" in f or "?" in f)]
+
+    parts = []
+    if dirs:
+        parts.append(f"{len(dirs)} director{'y' if len(dirs) == 1 else 'ies'}")
+    if file_inputs:
+        parts.append(f"{len(file_inputs)} file{'s' if len(file_inputs) != 1 else ''}")
+    if globs:
+        parts.append(f"{len(globs)} glob pattern{'s' if len(globs) != 1 else ''}")
+
+    if parts:
+        input_desc = ", ".join(parts)
+        output.info(
+            f"Found {input_desc} ({len(files_to_add)} file{'s' if len(files_to_add) != 1 else ''} total)..."
+        )
+    else:
+        output.info(f"Found {len(files_to_add)} files to add...")
+
+    try:
         output.verbose_msg(f"Loading raglet from {raglet_path}...")
         raglet = RAGlet.load(str(raglet_path))
         initial_chunks = len(raglet.chunks)
 
-        # Show configuration
         output.section("Configuration:")
         output.info(f"  Chunk size: {raglet.config.chunking.size}")
         output.info(f"  Chunk overlap: {raglet.config.chunking.overlap}")
         output.info(f"  Embedding model: {raglet.config.embedding.model}")
 
-        # Add files
         raglet.add_files(files_to_add, output=output)
 
-        # Determine output path
         output_path = Path(args.out) if args.out else raglet_path
 
-        # Check if backend supports incremental updates
         backend = raglet._get_default_backend(str(output_path))
         if backend.supports_incremental():
             output.verbose_msg("Saving incrementally...")
@@ -256,11 +271,10 @@ def package_command(args: argparse.Namespace) -> int:
         elif args.format == "sqlite":
             output_path = raglet_path.with_suffix(".sqlite")
         else:  # dir
-            # For directory output, use the path as-is or add .raglet suffix
             if raglet_path.suffix in [".zip", ".sqlite", ".db"]:
                 output_path = raglet_path.with_suffix("")
             else:
-                output_path = raglet_path / ".raglet" if raglet_path.is_file() else raglet_path
+                output_path = raglet_path
 
     try:
         # Load RAGlet (auto-detects format)
@@ -295,22 +309,24 @@ def main() -> int:
         epilog="""
 Examples:
   # Build raglet from files (creates directory)
-  raglet build file1.txt file2.md --out my-raglet/
-  raglet build ./docs --out docs/
-  raglet build "*.md" --out docs-kb/
+  raglet build file1.txt file2.md --out my-kb/
+  raglet build ./docs --out docs-kb/
+  raglet build "*.md" --out notes-kb/
 
   # Query raglet (works with any format)
-  raglet query "python" --raglet my-raglet/ --top-k 5
+  raglet query "python" --raglet my-kb/ --top-k 5
   raglet query "python" --raglet export.zip --top-k 5
   raglet query "python" --raglet knowledge.sqlite --top-k 5
 
   # Package (convert between formats)
-  raglet package --raglet my-raglet/ --format zip --out export.zip
+  raglet package --raglet my-kb/ --format zip --out export.zip
   raglet package --raglet export.zip --format sqlite --out knowledge.sqlite
-  raglet package --raglet knowledge.sqlite --format dir --out .raglet/
+  raglet package --raglet knowledge.sqlite --format dir --out my-kb/
 
   # Add files incrementally (works with any format)
-  raglet add --raglet my-raglet/ file3.txt
+  raglet add --raglet my-kb/ file3.txt
+  raglet add --raglet my-kb/ new-docs/
+  raglet add --raglet my-kb/ "*.md" --ignore __pycache__
   raglet add --raglet knowledge.sqlite file3.txt
         """,
     )
@@ -353,7 +369,7 @@ Examples:
     build_parser.add_argument(
         "--ignore",
         type=str,
-        default=".git,__pycache__,.venv,node_modules,.raglet",
+        default=".git,__pycache__,.venv,node_modules",
         help="Patterns to ignore (comma-separated)",
     )
     build_parser.add_argument(
@@ -417,13 +433,25 @@ Examples:
     add_parser.add_argument(
         "files",
         nargs="+",
-        help="Files to add",
+        help="Files, directories, or glob patterns to add",
     )
     add_parser.add_argument(
         "--out",
         type=str,
         default=None,
         help="Output path (default: same as --raglet)",
+    )
+    add_parser.add_argument(
+        "--ignore",
+        type=str,
+        default=".git,__pycache__,.venv,node_modules",
+        help="Patterns to ignore (comma-separated)",
+    )
+    add_parser.add_argument(
+        "--max-files",
+        type=int,
+        default=None,
+        help="Maximum number of files to add (default: all)",
     )
 
     # Package command

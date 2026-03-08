@@ -1,277 +1,192 @@
-"""Simple performance test for raglet operations.
+"""Benchmark raglet build (extract + chunk + embed + index).
 
-Tests performance based on total text content size (KB to MB).
-
-Tests:
-- from_files (create from files)
-- search
-- save
-- load
-- cleanup
+Generates synthetic text calibrated to produce a target chunk count,
+then times RAGlet.from_files() for each target.
 """
 
-import sys
-import time
 import json
 import shutil
+import sys
+import time
+from functools import partial
 from pathlib import Path
-from typing import List
+from typing import Optional
 
-import raglet  # noqa: F401
+print = partial(print, flush=True)  # type: ignore[assignment]
+
 from raglet import RAGlet
-from raglet.config.config import RAGletConfig
+from raglet.config.config import ChunkingConfig, EmbeddingConfig, RAGletConfig
+from raglet.processing.chunker import SentenceAwareChunker
+
+SENTENCES = [
+    "The quick brown fox jumps over the lazy dog near the riverbank.",
+    "Meanwhile the cat sat on the mat watching birds fly south.",
+    "A gentle breeze carried the scent of wildflowers across the meadow.",
+    "Dark clouds gathered on the horizon as evening approached slowly.",
+    "The old lighthouse keeper trimmed the wick by candlelight.",
+    "Waves crashed against the rocky shore sending spray into the air.",
+    "Children laughed and played in the park until the sun went down.",
+    "The train rumbled through the valley echoing off the canyon walls.",
+    "Fresh snow covered the mountain peaks in a blanket of white.",
+    "Fireflies danced above the tall grass on warm summer nights.",
+]
 
 
-def create_test_files(target_size_mb: float, output_dir: Path) -> List[str]:
-    """Create test files with approximately target_size_mb of text content.
-    
-    Args:
-        target_size_mb: Target total file size in MB
-        output_dir: Directory to write files to
-        
-    Returns:
-        List of file paths created
-    """
-    # Clean up directory first
+def generate_test_files(
+    target_chunks: int,
+    chunk_size: int,
+    chunk_overlap: int,
+    output_dir: Path,
+) -> list[str]:
+    """Generate files calibrated to produce approximately target_chunks."""
     if output_dir.exists():
         shutil.rmtree(output_dir)
-    output_dir.mkdir(exist_ok=True)
-    
-    # Realistic paragraph text (~500 bytes)
-    paragraph = (
-        "This is a test paragraph with realistic content. "
-        "It contains multiple sentences to make it more representative of real data. "
-        "The paragraph includes various words and concepts that might appear in actual documents. "
-        "This helps ensure our performance measurements are realistic and meaningful. "
-        "We want to test how raglet handles different amounts of text content from kilobytes to megabytes."
-    ) * 2  # ~1000 bytes per paragraph
-    
-    target_size_bytes = int(target_size_mb * 1024 * 1024)
-    file_paths = []
-    current_size = 0
-    file_num = 0
-    
-    while current_size < target_size_bytes:
-        file_path = output_dir / f"test_file_{file_num:05d}.txt"
-        file_paths.append(str(file_path))
-        
-        with open(file_path, "w") as f:
-            # Write paragraphs until we're close to target
-            while current_size < target_size_bytes:
-                f.write(paragraph + "\n\n")
-                current_size += len(paragraph) + 2  # +2 for newlines
-                
-                # Stop if this file would exceed reasonable file size (10MB per file max)
-                if current_size - (target_size_bytes - len(paragraph) - 2) > 10 * 1024 * 1024:
-                    break
-        
-        file_num += 1
-        
-        # If we've written enough, break
-        if current_size >= target_size_bytes:
-            break
-    
-    actual_size_mb = current_size / (1024 * 1024)
-    return file_paths, actual_size_mb
+    output_dir.mkdir(parents=True)
+
+    chunker = SentenceAwareChunker(ChunkingConfig(size=chunk_size, overlap=chunk_overlap))
+    sample_text = "\n".join(SENTENCES * 100)
+    sample_chunks = chunker.chunk(sample_text, metadata={"source": "calibration"})
+    if not sample_chunks:
+        raise RuntimeError("Calibration produced 0 chunks")
+
+    bytes_per_chunk = len(sample_text.encode()) / len(sample_chunks)
+    total_bytes = int(bytes_per_chunk * target_chunks * 1.05)
+
+    max_file_bytes = 2 * 1024 * 1024
+    file_paths: list[str] = []
+    written = 0
+    file_idx = 0
+    si = 0
+
+    while written < total_bytes:
+        path = output_dir / f"doc_{file_idx:05d}.txt"
+        file_paths.append(str(path))
+        file_written = 0
+        with open(path, "w") as f:
+            while file_written < max_file_bytes and written < total_bytes:
+                line = SENTENCES[si % len(SENTENCES)] + "\n"
+                f.write(line)
+                file_written += len(line)
+                written += len(line)
+                si += 1
+        file_idx += 1
+
+    return file_paths
 
 
-def run_experiment(
-    test_sizes_mb: List[float],
-    formats: List[str] = ["sqlite", "directory"],
-    output_file: str = "performance_results.json",
-):
-    """Run simple performance experiment based on text content size.
-    
-    Args:
-        test_sizes_mb: List of text sizes to test in MB (e.g., [0.1, 1.0, 10.0])
-        formats: List of formats to test ("sqlite", "directory")
-        output_file: Path to save results JSON
-    """
-    results = []
+def run(
+    chunk_counts: list[int],
+    chunk_size: int = 512,
+    chunk_overlap: int = 50,
+    device: Optional[str] = None,
+    fp16: bool = False,
+    output_file: str = "performance/performance_results.json",
+    keep: Optional[str] = None,
+) -> None:
+    """Benchmark build across different chunk counts."""
+    from raglet.config.config import _select_device
+
+    resolved_device = device or _select_device()
+
+    print(f"Device: {resolved_device} | fp16: {fp16} | chunk_size: {chunk_size} | overlap: {chunk_overlap}")
+    print(f"Targets: {chunk_counts}\n")
+
     test_dir = Path("test_data")
     test_dir.mkdir(exist_ok=True)
-    
-    print("=" * 80)
-    print("Performance Test: from_files → search → save → load")
-    print("=" * 80)
-    print(f"Formats: {', '.join(formats)}")
-    print(f"Text sizes: {', '.join(f'{s:.2f}MB' for s in test_sizes_mb)}\n")
-    
-    for size_mb in test_sizes_mb:
-        print(f"{'='*80}")
-        print(f"Testing {size_mb:.2f}MB of text content")
-        print(f"{'='*80}\n")
-        
-        # Create test files with target size
-        test_files_dir = test_dir / f"test_files_{size_mb}mb"
-        file_paths, actual_size_mb = create_test_files(size_mb, test_files_dir)
-        
-        print(f"Created {len(file_paths)} test files ({actual_size_mb:.2f}MB total)\n")
-        
-        for format_name in formats:
-            print(f"  Format: {format_name.upper()}")
-            
-            # Determine output path
-            if format_name == "sqlite":
-                output_path = test_dir / f"test_{size_mb}mb.sqlite"
-            elif format_name == "directory":
-                output_path = test_dir / f"test_{size_mb}mb_dir"
-            else:
-                print(f"    ✗ Unknown format: {format_name}")
-                continue
-            
-            # Clean up existing files
-            if output_path.exists():
-                if output_path.is_file():
-                    output_path.unlink()
-                else:
-                    shutil.rmtree(output_path)
-            
-            try:
-                # 1. from_files
-                print(f"    1. from_files...", flush=True)
-                start = time.perf_counter()
-                config = RAGletConfig()
-                
-                try:
-                    raglet = RAGlet.from_files(file_paths, config=config)
-                except Exception as e:
-                    print(f"       ✗ ERROR during from_files: {e}", flush=True)
-                    import traceback
-                    traceback.print_exc()
-                    raise
-                
-                from_files_time = time.perf_counter() - start
-                print(f"       ✓ {from_files_time*1000:.2f}ms", flush=True)
-                
-                # 2. search
-                print(f"    2. search...")
-                start = time.perf_counter()
-                results_search = raglet.search("test chunk content", top_k=5)
-                search_time = time.perf_counter() - start
-                print(f"       ✓ {search_time*1000:.2f}ms ({len(results_search)} results)")
-                
-                # 3. save
-                print(f"    3. save...")
-                start = time.perf_counter()
-                raglet.save(str(output_path))
-                save_time = time.perf_counter() - start
-                
-                # Calculate file size
-                if output_path.is_file():
-                    file_size = output_path.stat().st_size
-                else:
-                    file_size = sum(f.stat().st_size for f in output_path.rglob("*") if f.is_file())
-                
-                print(f"       ✓ {save_time*1000:.2f}ms ({file_size/1024/1024:.2f}MB)")
-                
-                # 4. load
-                print(f"    4. load...")
-                start = time.perf_counter()
-                loaded_raglet = RAGlet.load(str(output_path))
-                load_time = time.perf_counter() - start
-                print(f"       ✓ {load_time*1000:.2f}ms")
-                
-                # Capture chunk count before cleanup
-                chunk_count = len(raglet.chunks)
-                
-                # 5. cleanup
-                print(f"    5. cleanup...")
-                raglet.close()
-                loaded_raglet.close()
-                del raglet
-                del loaded_raglet
-                print(f"       ✓ Done\n")
-                
-                result = {
-                    "text_size_mb": actual_size_mb,
-                    "chunk_count": chunk_count,  # Actual chunks created
-                    "format": format_name,
-                    "from_files_time_ms": from_files_time * 1000,
-                    "search_time_ms": search_time * 1000,
-                    "save_time_ms": save_time * 1000,
-                    "load_time_ms": load_time * 1000,
-                    "file_size_bytes": file_size,
-                }
-                results.append(result)
-                
-            except Exception as e:
-                print(f"    ✗ ERROR: {e}")
-                import traceback
-                traceback.print_exc()
-                continue
-        
-        # Clean up test files
-        shutil.rmtree(test_files_dir)
-    
-    # Save results
-    print(f"\nSaving results to {output_file}...")
-    with open(output_file, 'w') as f:
+    results = []
+
+    for target in chunk_counts:
+        print(f"--- {target:,} chunks ---")
+
+        files_dir = test_dir / f"files_{target}"
+        file_paths = generate_test_files(target, chunk_size, chunk_overlap, files_dir)
+        text_mb = sum(Path(p).stat().st_size for p in file_paths) / (1024 * 1024)
+        print(f"  {len(file_paths)} files, {text_mb:.1f} MB text")
+
+        config = RAGletConfig(
+            chunking=ChunkingConfig(size=chunk_size, overlap=chunk_overlap),
+            embedding=EmbeddingConfig(device=resolved_device, use_fp16=fp16),
+        )
+
+        try:
+            t0 = time.perf_counter()
+            rag = RAGlet.from_files(file_paths, config=config)
+            build_s = time.perf_counter() - t0
+            actual = len(rag.chunks)
+            chunks_per_s = actual / build_s if build_s > 0 else 0
+
+            print(f"  {build_s:.1f}s  ({actual:,} chunks, {chunks_per_s:,.0f} chunks/s)")
+
+            results.append({
+                "target": target,
+                "actual": actual,
+                "text_mb": round(text_mb, 2),
+                "build_s": round(build_s, 2),
+                "chunks_per_s": round(chunks_per_s),
+                "chunk_size": chunk_size,
+                "chunk_overlap": chunk_overlap,
+                "device": resolved_device,
+                "fp16": fp16,
+            })
+
+            if keep:
+                save_path = str(Path(keep) / f"raglet_{actual}.sqlite")
+                rag.save(save_path)
+                print(f"  saved: {save_path}")
+
+            rag.close()
+
+        except Exception as e:
+            print(f"  ERROR: {e}")
+            import traceback
+            traceback.print_exc()
+
+        finally:
+            shutil.rmtree(files_dir, ignore_errors=True)
+
+        print()
+
+    if test_dir.exists() and not any(test_dir.iterdir()):
+        test_dir.rmdir()
+
+    Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+    with open(output_file, "w") as f:
         json.dump(results, f, indent=2)
-    print(f"✓ Saved {len(results)} results\n")
-    
-    # Print summary
-    print("=" * 80)
-    print("Results Summary")
-    print("=" * 80)
-    
-    for format_name in formats:
-        format_results = [r for r in results if r.get('format') == format_name]
-        if not format_results:
-            continue
-        
-        print(f"\n{format_name.upper()}:")
-        print(f"{'Text (MB)':>10} | {'Chunks':>10} | {'from_files':>12} | {'search':>10} | {'save':>10} | {'load':>10} | {'Size (MB)':>12}")
-        print("-" * 90)
-        for r in format_results:
-            print(
-                f"{r['text_size_mb']:>10.2f} | "
-                f"{r['chunk_count']:>10,} | "
-                f"{r['from_files_time_ms']:>12.2f} | "
-                f"{r['search_time_ms']:>10.2f} | "
-                f"{r['save_time_ms']:>10.2f} | "
-                f"{r['load_time_ms']:>10.2f} | "
-                f"{r['file_size_bytes']/1024/1024:>12.2f}"
-            )
-    
-    print(f"\nResults saved to {output_file}")
+
+    print(f"{'Chunks':>10} | {'Text':>8} | {'Build':>10} | {'Throughput':>14}")
+    print("-" * 52)
+    for r in results:
+        print(
+            f"{r['actual']:>10,} | "
+            f"{r['text_mb']:>6.1f}MB | "
+            f"{r['build_s']:>8.1f}s | "
+            f"{r['chunks_per_s']:>10,} chunks/s"
+        )
+    print(f"\nResults: {output_file}")
 
 
 if __name__ == "__main__":
     import argparse
-    
-    parser = argparse.ArgumentParser(description="Simple performance test for raglet")
-    parser.add_argument(
-        "--sizes",
-        type=float,
-        nargs="+",
-        default=[0.1, 1.0, 10.0],
-        help="Text sizes to test in MB (default: 0.1 1.0 10.0)"
-    )
-    parser.add_argument(
-        "--formats",
-        type=str,
-        nargs="+",
-        choices=["sqlite", "directory"],
-        default=["sqlite", "directory"],
-        help="Formats to test (default: sqlite directory)"
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        default="performance_results.json",
-        help="Output JSON file (default: performance_results.json)"
-    )
-    
-    args = parser.parse_args()
-    
+
+    p = argparse.ArgumentParser(description="Benchmark raglet build")
+    p.add_argument("--chunks", type=int, nargs="+", default=[1000, 5000, 10000],
+                   help="Target chunk counts (default: 1000 5000 10000)")
+    p.add_argument("--chunk-size", type=int, default=512, help="Chunk size in tokens (default: 512)")
+    p.add_argument("--chunk-overlap", type=int, default=50, help="Overlap in tokens (default: 50)")
+    p.add_argument("--device", choices=["cpu", "mps", "cuda"], default=None, help="Inference device")
+    p.add_argument("--fp16", action="store_true", help="Enable fp16 (MPS/CUDA only)")
+    p.add_argument("--output", default="performance/performance_results.json", help="Output JSON path")
+    p.add_argument("--keep", type=str, default=None, help="Directory to save built raglet files into")
+
+    args = p.parse_args()
+
     try:
-        run_experiment(args.sizes, args.formats, args.output)
+        run(args.chunks, args.chunk_size, args.chunk_overlap, args.device, args.fp16, args.output, args.keep)
     except KeyboardInterrupt:
-        print("\n\nInterrupted by user")
+        print("\nInterrupted")
         sys.exit(130)
     except Exception as e:
-        print(f"\n\nFatal error: {e}")
+        print(f"\nFatal: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

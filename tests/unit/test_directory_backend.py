@@ -228,10 +228,7 @@ class TestDirectoryStorageBackend:
         backend = DirectoryStorageBackend()
         config = RAGletConfig()
         n = 1000
-        chunks = [
-            Chunk(text=f"Chunk number {i}", source="scale.txt", index=i)
-            for i in range(n)
-        ]
+        chunks = [Chunk(text=f"Chunk number {i}", source="scale.txt", index=i) for i in range(n)]
         raglet = RAGlet(chunks=chunks, config=config)
         original_embeddings = raglet.embeddings.copy()
 
@@ -243,6 +240,4 @@ class TestDirectoryStorageBackend:
             assert len(loaded.chunks) == n
             assert loaded.chunks[0].text == "Chunk number 0"
             assert loaded.chunks[n - 1].text == f"Chunk number {n - 1}"
-            np.testing.assert_array_almost_equal(
-                loaded.embeddings, original_embeddings, decimal=5
-            )
+            np.testing.assert_array_almost_equal(loaded.embeddings, original_embeddings, decimal=5)

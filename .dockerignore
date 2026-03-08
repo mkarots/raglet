@@ -9,7 +9,7 @@ __pycache__/
 *.so
 .Python
 *.egg-info/
-dist/
+
 build/
 .venv/
 venv/
@@ -51,4 +51,3 @@ assets/
 .DS_Store
 *.sqlite
 *.db
-.raglet/

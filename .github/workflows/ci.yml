@@ -34,17 +34,8 @@ jobs:
     - name: Install dependencies
       run: make install-dev
     
-    - name: Lint
-      run: make lint
-    
-    - name: Format check
-      run: make format-check
-    
-    - name: Type check
-      run: make type-check
-    
-    - name: Run tests with coverage
-      run: make coverage-ci
+    - name: Run CI checks
+      run: make ci
     
     - name: Upload coverage
       uses: codecov/codecov-action@v3

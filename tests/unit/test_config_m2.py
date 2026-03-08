@@ -29,7 +29,10 @@ class TestEmbeddingConfig:
     def test_validation_success(self):
         """Test successful validation."""
         config = EmbeddingConfig(
-            model="all-MiniLM-L6-v2", batch_size=64, device="cpu", use_fp16=False,
+            model="all-MiniLM-L6-v2",
+            batch_size=64,
+            device="cpu",
+            use_fp16=False,
         )
         config.validate()  # Should not raise
 
