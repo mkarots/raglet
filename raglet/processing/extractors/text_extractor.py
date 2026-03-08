@@ -56,10 +56,7 @@ class TextExtractor(DocumentExtractor):
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        try:
-            with open(file_path, encoding=self.encoding) as f:
-                return f.read()
-        except UnicodeDecodeError:
-            # Try with error handling
-            with open(file_path, encoding=self.encoding, errors="replace") as f:
-                return f.read()
+        # Use errors="replace" by default to avoid double file read on encoding errors
+        # This is more efficient and handles invalid UTF-8 gracefully
+        with open(file_path, encoding=self.encoding, errors="replace") as f:
+            return f.read()

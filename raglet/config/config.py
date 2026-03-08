@@ -4,6 +4,43 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 
+def _select_device() -> str:
+    """Select best available inference device.
+
+    Returns:
+        Device string: "cuda" if CUDA is available, "mps" if Apple Silicon MPS
+        is available, otherwise "cpu"
+    """
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            return "cuda"
+        if torch.backends.mps.is_available() and torch.backends.mps.is_built():
+            return "mps"
+    except ImportError:
+        # torch not installed, fall back to cpu
+        pass
+    return "cpu"
+
+
+def _default_batch_size() -> int:
+    """Select a sensible default encode batch size based on the active device.
+
+    Larger batches amortise GPU launch overhead; smaller batches avoid OOM on CPU.
+    Values are based on empirical testing with all-MiniLM-L6-v2.
+
+    Returns:
+        Recommended batch size for the current device.
+    """
+    device = _select_device()
+    if device == "cuda":
+        return 256
+    if device == "mps":
+        return 128
+    return 32
+
+
 @dataclass
 class ChunkingConfig:
     """Configuration for text chunking."""
@@ -61,9 +98,30 @@ class EmbeddingConfig:
     """Configuration for embedding generation."""
 
     model: str = "all-MiniLM-L6-v2"
-    batch_size: int = 32
-    device: str = "cpu"
-    normalize: bool = True  # Default to True for cosine similarity
+    batch_size: int = field(default_factory=_default_batch_size)
+    """Number of chunks encoded per model forward pass.
+
+    Defaults are device-aware: 32 (CPU), 128 (MPS), 256 (CUDA).
+    Larger values improve GPU utilisation but increase VRAM usage. Tune
+    downward if you hit out-of-memory errors on long chunks.
+    """
+    device: str = field(default_factory=_select_device)
+    normalize: bool = True  # Deprecated: Normalization is handled by FAISS for consistency
+    use_fp16: bool = False
+    """Enable float16 (half-precision) inference on MPS or CUDA devices.
+
+    Typically gives 1.5–2× throughput on Apple Silicon MPS at negligible
+    quality loss for retrieval tasks. Has no effect on CPU (float16 is slow
+    on x86 without AVX-512 support). Embeddings are always returned as
+    float32 regardless of this setting.
+    """
+    torch_compile: bool = False
+    """Enable torch.compile() graph optimisation. Requires PyTorch ≥ 2.0.
+
+    Gives roughly 15–25% additional throughput on MPS/CUDA after a one-time
+    compilation warmup (typically 10–30 s on first call). Falls back
+    gracefully if torch.compile is unavailable or raises an error.
+    """
 
     def validate(self) -> None:
         """Validate embedding configuration.
@@ -75,8 +133,13 @@ class EmbeddingConfig:
             raise ValueError("embedding model must be specified")
         if self.batch_size < 1:
             raise ValueError("batch_size must be >= 1")
-        if self.device not in ["cpu", "cuda"]:
-            raise ValueError("device must be 'cpu' or 'cuda'")
+        if self.device not in ["cpu", "cuda", "mps"]:
+            raise ValueError("device must be 'cpu', 'cuda', or 'mps'")
+        if self.use_fp16 and self.device == "cpu":
+            raise ValueError(
+                "use_fp16=True has no benefit on CPU and may reduce accuracy. "
+                "Set device='mps' or device='cuda', or set use_fp16=False."
+            )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary.
@@ -89,6 +152,8 @@ class EmbeddingConfig:
             "batch_size": self.batch_size,
             "device": self.device,
             "normalize": self.normalize,
+            "use_fp16": self.use_fp16,
+            "torch_compile": self.torch_compile,
         }
 
     @classmethod
@@ -103,9 +168,11 @@ class EmbeddingConfig:
         """
         return cls(
             model=data.get("model", "all-MiniLM-L6-v2"),
-            batch_size=data.get("batch_size", 32),
-            device=data.get("device", "cpu"),
-            normalize=data.get("normalize", True),  # Default to True for cosine similarity
+            batch_size=data.get("batch_size", _default_batch_size()),
+            device=data.get("device", _select_device()),
+            normalize=data.get("normalize", True),
+            use_fp16=data.get("use_fp16", False),
+            torch_compile=data.get("torch_compile", False),
         )
 
 

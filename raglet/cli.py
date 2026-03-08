@@ -36,7 +36,7 @@ def build_command(args: argparse.Namespace) -> int:
 
     # Determine output path (build only creates directories)
     # --out is required, so args.out is guaranteed to be set
-        output_path = Path(args.out)
+    output_path = Path(args.out)
 
     # Analyze original inputs to show what's being processed
     dirs = [f for f in args.inputs if Path(f).is_dir()]
@@ -98,9 +98,9 @@ def build_command(args: argparse.Namespace) -> int:
     except Exception as e:
         output.error(f"Building raglet failed: {e}")
         if getattr(args, "verbose", False):
-        import traceback
+            import traceback
 
-        traceback.print_exc()
+            traceback.print_exc()
         return 1
 
 
@@ -208,7 +208,7 @@ def add_command(args: argparse.Namespace) -> int:
         backend = raglet._get_default_backend(str(output_path))
         if backend.supports_incremental():
             output.verbose_msg("Saving incrementally...")
-        raglet.save(str(output_path), incremental=True)
+            raglet.save(str(output_path), incremental=True)
         else:
             output.verbose_msg("Saving (full save, incremental not supported)...")
             raglet.save(str(output_path), incremental=False)

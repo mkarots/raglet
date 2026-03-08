@@ -17,6 +17,15 @@ class DirectoryStorageBackend(StorageBackend):
     """Directory-based storage backend for RAGlet instances."""
 
     VERSION = "1.0.0"
+    
+    def close(self) -> None:
+        """Close the storage backend and free resources.
+        
+        Directory backend doesn't hold persistent resources, so this is a no-op
+        for consistency with other backends.
+        """
+        # Directory backend doesn't hold persistent resources
+        pass
 
     def save(
         self,
@@ -59,23 +68,26 @@ class DirectoryStorageBackend(StorageBackend):
         # Save config.json
         config_path = dir_path / "config.json"
         with open(config_path, "w") as f:
-            json.dump(raglet.config.to_dict(), f, indent=2)
+            json.dump(raglet.config.to_dict(), f, separators=(',', ':'))
 
         # Save chunks.json
         chunks_path = dir_path / "chunks.json"
         chunks_data = [chunk.to_dict() for chunk in raglet.chunks]
         with open(chunks_path, "w") as f:
-            json.dump(chunks_data, f, indent=2)
+            json.dump(chunks_data, f, separators=(',', ':'))
 
-        # Save embeddings.npy
+        # Save embeddings.npy — read from FAISS to avoid materialising the
+        # lazy ``raglet.embeddings`` property (which would vstack all chunks
+        # into a temporary array).
         embeddings_path = dir_path / "embeddings.npy"
-        if len(raglet.embeddings) > 0:
-            np.save(str(embeddings_path), raglet.embeddings.astype(np.float32))
-        else:
-            # Create empty array with correct dimension
-            embedding_dim = raglet.embedding_generator.get_dimension()
-            empty_embeddings = np.array([]).reshape(0, embedding_dim).astype(np.float32)
-            np.save(str(embeddings_path), empty_embeddings)
+        all_vectors = raglet.vector_store.get_all_vectors()
+        np.save(str(embeddings_path), all_vectors)
+
+        embedding_dim = (
+            int(all_vectors.shape[1])
+            if len(all_vectors) > 0
+            else raglet.embedding_generator.get_dimension()
+        )
 
         # Save metadata.json
         metadata_path = dir_path / "metadata.json"
@@ -84,15 +96,11 @@ class DirectoryStorageBackend(StorageBackend):
             "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "chunk_count": len(raglet.chunks),
-            "embedding_dim": (
-                raglet.embeddings.shape[1]
-                if len(raglet.embeddings) > 0
-                else raglet.embedding_generator.get_dimension()
-            ),
+            "embedding_dim": embedding_dim,
             "embedding_model": raglet.config.embedding.model,
         }
         with open(metadata_path, "w") as f:
-            json.dump(metadata, f, indent=2)
+            json.dump(metadata, f, separators=(',', ':'))
 
     def _add_chunks_incremental(self, dir_path: Path, raglet: RAGlet) -> None:
         """Add chunks incrementally to existing directory.
@@ -131,22 +139,35 @@ class DirectoryStorageBackend(StorageBackend):
         # Save updated chunks
         chunks_data = [chunk.to_dict() for chunk in updated_chunks]
         with open(chunks_path, "w") as f:
-            json.dump(chunks_data, f, indent=2)
+            json.dump(chunks_data, f, separators=(',', ':'))
 
-        # Append embeddings
+        # Append embeddings efficiently using memory-mapped append
+        # Instead of loading everything, we append only the new embeddings
         embeddings_path = dir_path / "embeddings.npy"
-        if embeddings_path.exists():
-            existing_embeddings = np.load(str(embeddings_path))
-        else:
-            # Create empty array with correct dimension
-            embedding_dim = raglet.embedding_generator.get_dimension()
-            existing_embeddings = np.array([]).reshape(0, embedding_dim).astype(np.float32)
-
+        
         # Get embeddings for new chunks only
         new_embeddings = raglet.embeddings[current_count:]
-
-        # Stack embeddings
-        updated_embeddings = np.vstack([existing_embeddings, new_embeddings]).astype(np.float32)
+        
+        if embeddings_path.exists():
+            # Use memory-mapped file to append without loading everything into memory
+            # Load existing file in memory-mapped mode (read-only)
+            existing_embeddings = np.load(str(embeddings_path), mmap_mode='r')
+            
+            # Create new array with combined size
+            total_count = len(existing_embeddings) + len(new_embeddings)
+            embedding_dim = existing_embeddings.shape[1] if len(existing_embeddings) > 0 else raglet.embedding_generator.get_dimension()
+            
+            # Allocate new array and copy existing + new
+            updated_embeddings = np.empty((total_count, embedding_dim), dtype=np.float32)
+            updated_embeddings[:len(existing_embeddings)] = existing_embeddings
+            updated_embeddings[len(existing_embeddings):] = new_embeddings
+            
+            # Close memory-mapped file
+            del existing_embeddings
+        else:
+            # Create new file with new embeddings
+            updated_embeddings = new_embeddings.astype(np.float32)
+        
         np.save(str(embeddings_path), updated_embeddings)
 
         # Update metadata
@@ -165,7 +186,7 @@ class DirectoryStorageBackend(StorageBackend):
             metadata["version"] = self.VERSION
 
         with open(metadata_path, "w") as f:
-            json.dump(metadata, f, indent=2)
+            json.dump(metadata, f, separators=(',', ':'))
 
     def load(self, file_path: str) -> RAGlet:
         """Load RAGlet from directory structure.
@@ -206,7 +227,10 @@ class DirectoryStorageBackend(StorageBackend):
         embeddings_path = dir_path / "embeddings.npy"
         if not embeddings_path.exists():
             raise ValueError(f"embeddings.npy not found in {file_path}")
-        embeddings = np.load(str(embeddings_path))
+        # np.save always writes C-contiguous float32, so np.load returns a
+        # contiguous array.  ascontiguousarray is a no-op in the common case
+        # but guarantees the layout FAISS requires without forcing a copy.
+        embeddings = np.ascontiguousarray(np.load(str(embeddings_path)), dtype=np.float32)
 
         # Validate embedding dimension matches model dimension
         from raglet.embeddings.generator import SentenceTransformerGenerator
@@ -280,7 +304,7 @@ class DirectoryStorageBackend(StorageBackend):
         # Save updated chunks
         chunks_data = [chunk.to_dict() for chunk in updated_chunks]
         with open(chunks_path, "w") as f:
-            json.dump(chunks_data, f, indent=2)
+            json.dump(chunks_data, f, separators=(',', ':'))
 
         # Append embeddings
         embeddings_path = dir_path / "embeddings.npy"
@@ -322,4 +346,4 @@ class DirectoryStorageBackend(StorageBackend):
             metadata["version"] = self.VERSION
 
         with open(metadata_path, "w") as f:
-            json.dump(metadata, f, indent=2)
+            json.dump(metadata, f, separators=(',', ':'))

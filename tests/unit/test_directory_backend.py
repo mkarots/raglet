@@ -218,3 +218,31 @@ class TestDirectoryStorageBackend:
 
             with pytest.raises(ValueError, match="Embedding dimension mismatch"):
                 backend.load(str(dir_path))
+
+    def test_round_trip_1000_chunks(self):
+        """Save/load 1000 chunks and verify embedding fidelity.
+
+        Exercises the get_all_vectors() save path and the
+        ascontiguousarray load path at moderate scale.
+        """
+        backend = DirectoryStorageBackend()
+        config = RAGletConfig()
+        n = 1000
+        chunks = [
+            Chunk(text=f"Chunk number {i}", source="scale.txt", index=i)
+            for i in range(n)
+        ]
+        raglet = RAGlet(chunks=chunks, config=config)
+        original_embeddings = raglet.embeddings.copy()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dir_path = Path(tmpdir) / "scale_dir"
+            backend.save(raglet, str(dir_path))
+
+            loaded = backend.load(str(dir_path))
+            assert len(loaded.chunks) == n
+            assert loaded.chunks[0].text == "Chunk number 0"
+            assert loaded.chunks[n - 1].text == f"Chunk number {n - 1}"
+            np.testing.assert_array_almost_equal(
+                loaded.embeddings, original_embeddings, decimal=5
+            )

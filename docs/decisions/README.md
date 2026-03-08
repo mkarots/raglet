@@ -11,6 +11,9 @@ This directory contains architectural and design decisions for raglet.
 - [005: Portable File Format](005-portable-file-format.md) - .raglet file format
 - [006: Technology Stack](006-technology-stack.md) - Dependencies and tools
 - [007: Agent Tools](007-agent-tools.md) - Anthropic tool integration
+- [008: Instance Lifecycle Management](008_lifecycle.md) - Resource cleanup and close() methods
+- [009: Eliminate Redundant `self.embeddings` Cache](009-remove-embeddings-cache.md) - Deferred materialization to fix OOM
+- [010: Workspace-Scale Limits and Graceful Degradation](010-workspace-scale-limits.md) - Concrete chunk/size limits with two-tier enforcement
 
 ## Format
 

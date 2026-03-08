@@ -182,3 +182,32 @@ class TestSQLiteStorageBackend:
             assert len(loaded.chunks) == 1
             assert loaded.chunks[0].text == "New chunk"
             assert loaded.chunks[0].source == "test2.txt"
+
+    def test_round_trip_1000_chunks(self):
+        """Save/load 1000 chunks and verify embedding fidelity.
+
+        This exercises the batched save path and the pre-allocated load
+        path at a scale where the old list-comprehension approach would
+        have duplicated ~1.5 MB of embeddings in memory.
+        """
+        backend = SQLiteStorageBackend()
+        config = RAGletConfig()
+        n = 1000
+        chunks = [
+            Chunk(text=f"Chunk number {i}", source="scale.txt", index=i)
+            for i in range(n)
+        ]
+        raglet = RAGlet(chunks=chunks, config=config)
+        original_embeddings = raglet.embeddings.copy()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            file_path = Path(tmpdir) / "scale.sqlite"
+            backend.save(raglet, str(file_path))
+
+            loaded = backend.load(str(file_path))
+            assert len(loaded.chunks) == n
+            assert loaded.chunks[0].text == "Chunk number 0"
+            assert loaded.chunks[n - 1].text == f"Chunk number {n - 1}"
+            np.testing.assert_array_almost_equal(
+                loaded.embeddings, original_embeddings, decimal=5
+            )

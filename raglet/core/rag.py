@@ -93,10 +93,19 @@ class RAGlet:
         else:
             self.vector_store = vector_store
 
-        # Generate or use provided embeddings
+        # Deferred materialisation: store embedding arrays in a list, only
+        # vstack when the full matrix is actually needed (save / dimension check).
+        # This eliminates the 3x peak allocation that np.vstack caused on every
+        # add_chunks() call. See ADR 009.
+        self._embedding_chunks: list[np.ndarray] = []
+
+        # Generate or use provided embeddings.
+        # The local ``emb`` reference is passed directly to ``add_vectors``
+        # so we never trigger the ``self.embeddings`` property (which would
+        # vstack ``_embedding_chunks`` — a wasted copy when there is only
+        # one array in the list).
         if chunks:
             if embeddings is not None:
-                # Validate provided embeddings match generator dimension
                 provided_dim = embeddings.shape[1] if len(embeddings) > 0 else 0
                 generator_dim = self.embedding_generator.get_dimension()
 
@@ -107,14 +116,35 @@ class RAGlet:
                         f"Embeddings must match the model's dimension."
                     )
 
-                self.embeddings = embeddings
+                emb = embeddings
             else:
-                self.embeddings = self.embedding_generator.generate(chunks)
+                emb = self.embedding_generator.generate(chunks)
 
-            # Add vectors to vector store (vector store initialization)
-            self.vector_store.add_vectors(self.embeddings, chunks)
-        else:
-            self.embeddings = np.array([]).reshape(0, self.embedding_generator.get_dimension())
+            self._embedding_chunks.append(emb)
+            self.vector_store.add_vectors(emb, chunks)
+
+        self._closed = False
+
+    @property
+    def embeddings(self) -> np.ndarray:
+        """Lazily materialised embedding matrix.
+
+        Returns the full (n_chunks, embedding_dim) array. Multiple internal
+        arrays are vstacked on first access and then cached so subsequent
+        reads are free.  This replaces the old ``self.embeddings`` attribute
+        that was eagerly vstacked on every ``add_chunks()`` call.
+        """
+        if not self._embedding_chunks:
+            dim = self.embedding_generator.get_dimension()
+            return np.empty((0, dim), dtype=np.float32)
+        if len(self._embedding_chunks) > 1:
+            self._embedding_chunks = [np.vstack(self._embedding_chunks)]
+        return self._embedding_chunks[0]
+
+    @embeddings.setter
+    def embeddings(self, value: np.ndarray) -> None:
+        """Allow direct assignment for backward compatibility (tests, backends)."""
+        self._embedding_chunks = [value]
 
     @classmethod
     def from_files(
@@ -177,6 +207,12 @@ class RAGlet:
                 f"Extracting text from {len(filtered_files)} file{'s' if len(filtered_files) != 1 else ''}..."
             )
 
+        # Hoist chunker construction outside loop (stateless, can be reused)
+        if chunker is None:
+            chunker_instance: Chunker = SentenceAwareChunker(config.chunking)
+        else:
+            chunker_instance = chunker
+
         all_chunks = []
         for i, file_path in enumerate(filtered_files, 1):
             if output and i % max(1, len(filtered_files) // 10) == 0:
@@ -184,6 +220,8 @@ class RAGlet:
                     f"  Processing file {i}/{len(filtered_files)}: {Path(file_path).name}"
                 )
 
+            # Extractor may need to be created per file if types differ
+            # But if a single extractor is provided, reuse it
             if document_extractor is None:
                 extractor = create_extractor(file_path)
             else:
@@ -191,12 +229,7 @@ class RAGlet:
 
             text = extractor.extract(file_path)
 
-            # Step 2: Chunk text
-            if chunker is None:
-                chunker_instance: Chunker = SentenceAwareChunker(config.chunking)
-            else:
-                chunker_instance = chunker
-
+            # Step 2: Chunk text (chunker is already created above)
             chunks = chunker_instance.chunk(text, metadata={"source": file_path})
             all_chunks.extend(chunks)
 
@@ -472,6 +505,10 @@ class RAGlet:
         Chunk indices are automatically assigned based on the current number of chunks.
         If chunks already have indices set, they will be reassigned to ensure continuity.
 
+        Embeddings are appended to an internal list (O(1)) rather than
+        vstacked into the full matrix (O(n) copy).  The full matrix is only
+        materialised when ``self.embeddings`` is accessed (e.g. during save).
+
         Args:
             new_chunks: New chunks to add (indices will be auto-assigned)
             file_path: Optional file path (if provided, saves immediately)
@@ -479,29 +516,22 @@ class RAGlet:
         if not new_chunks:
             return
 
-        # Auto-assign chunk indices based on current chunk count
         current_index = len(self.chunks)
         for i, chunk in enumerate(new_chunks):
-            # Reassign index to ensure continuity
             chunk.index = current_index + i
 
-        # Generate embeddings for new chunks
         new_embeddings = self.embedding_generator.generate(new_chunks)
 
-        # Add to vector store
         self.vector_store.add_vectors(new_embeddings, new_chunks)
 
-        # Update in-memory state
         self.chunks.extend(new_chunks)
-        self.embeddings = np.vstack([self.embeddings, new_embeddings])
+        self._embedding_chunks.append(new_embeddings)
 
-        # Save if file path provided
         if file_path:
             backend = self._get_default_backend(file_path)
             if backend.supports_incremental():
                 backend.add_chunks(file_path, new_chunks, new_embeddings, self)
             else:
-                # Fallback to full save
                 self.save(file_path, incremental=False, storage_backend=backend)
 
     @classmethod
@@ -608,3 +638,76 @@ class RAGlet:
             StorageBackend instance
         """
         return RAGlet._detect_backend(file_path)
+
+    def close(self) -> None:
+        """Close the RAGlet instance and free all resources.
+        
+        Cascades cleanup to all owned components:
+        - FAISSVectorStore: Resets and frees C++ heap memory
+        - SentenceTransformerGenerator: Shuts down loky executor (if applicable)
+        
+        After calling close(), the instance should not be used. Methods will
+        raise RuntimeError if called after close().
+        
+        This is deterministic cleanup - recommended for loops, pipelines, and
+        test suites to prevent resource accumulation.
+        """
+        if self._closed:
+            return
+
+        # Close vector store (frees FAISS C++ memory)
+        if hasattr(self, 'vector_store') and self.vector_store is not None:
+            if hasattr(self.vector_store, 'close'):
+                self.vector_store.close()
+
+        # Close embedding generator (shuts down loky executor if applicable)
+        if hasattr(self, 'embedding_generator') and self.embedding_generator is not None:
+            if hasattr(self.embedding_generator, 'close'):
+                self.embedding_generator.close()
+
+        # Clear references to help GC
+        self.chunks.clear()
+        self._embedding_chunks.clear()
+
+        self._closed = True
+
+    def __del__(self) -> None:
+        """Destructor - calls close() as a safety net.
+        
+        Python's GC doesn't guarantee when __del__ runs, and circular references
+        can prevent it entirely. Prefer explicit close() for deterministic cleanup.
+        """
+        try:
+            if hasattr(self, '_closed') and not self._closed:
+                self.close()
+        except Exception:
+            # Silently ignore errors during destruction
+            # (object may be partially constructed or already destroyed)
+            pass
+
+    def __enter__(self) -> "RAGlet":
+        """Context manager entry - returns self.
+        
+        Allows using RAGlet as a context manager:
+        
+        ```python
+        with RAGlet.load("data.raglet") as raglet:
+            results = raglet.search("query")
+        ```
+        
+        Returns:
+            Self (RAGlet instance)
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Context manager exit - calls close().
+        
+        Ensures cleanup happens even if an exception occurs.
+        
+        Args:
+            exc_type: Exception type (if any)
+            exc_val: Exception value (if any)
+            exc_tb: Exception traceback (if any)
+        """
+        self.close()

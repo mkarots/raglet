@@ -2,7 +2,6 @@
 
 import io
 import json
-import tempfile
 import zipfile
 from pathlib import Path
 from typing import Optional
@@ -23,6 +22,15 @@ class ZipStorageBackend(StorageBackend):
     """
 
     VERSION = "1.0.0"
+    
+    def close(self) -> None:
+        """Close the storage backend and free resources.
+        
+        Zip backend doesn't hold persistent resources, so this is a no-op
+        for consistency with other backends.
+        """
+        # Zip backend doesn't hold persistent resources
+        pass
 
     def save(
         self,
@@ -54,19 +62,16 @@ class ZipStorageBackend(StorageBackend):
         with zipfile.ZipFile(str(file_path), "w", zipfile.ZIP_DEFLATED) as zipf:
             # Save config
             config_dict = raglet.config.to_dict()
-            zipf.writestr("config.json", json.dumps(config_dict, indent=2))
+            zipf.writestr("config.json", json.dumps(config_dict, separators=(',', ':')))
 
             # Save chunks
             chunks_data = [chunk.to_dict() for chunk in raglet.chunks]
-            zipf.writestr("chunks.json", json.dumps(chunks_data, indent=2))
+            zipf.writestr("chunks.json", json.dumps(chunks_data, separators=(',', ':')))
 
-            # Save embeddings
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".npy") as tmp:
-                np.save(tmp.name, raglet.embeddings)
-                tmp.flush()
-                with open(tmp.name, "rb") as f:
-                    zipf.writestr("embeddings.npy", f.read())
-                Path(tmp.name).unlink()
+            # Save embeddings using in-memory buffer
+            buf = io.BytesIO()
+            np.save(buf, raglet.embeddings)
+            zipf.writestr("embeddings.npy", buf.getvalue())
 
             # Save metadata
             metadata = {
@@ -75,7 +80,7 @@ class ZipStorageBackend(StorageBackend):
                 "embedding_dim": raglet.embeddings.shape[1] if len(raglet.embeddings) > 0 else 0,
                 "embedding_model": raglet.config.embedding.model,
             }
-            zipf.writestr("metadata.json", json.dumps(metadata, indent=2))
+            zipf.writestr("metadata.json", json.dumps(metadata, separators=(',', ':')))
 
     def load(self, file_path: str) -> RAGlet:
         """Load RAGlet from zip archive.

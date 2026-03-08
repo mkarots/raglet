@@ -19,6 +19,16 @@ class SQLiteStorageBackend(StorageBackend):
 
     VERSION = "1.0.0"
 
+    def close(self) -> None:
+        """Close the storage backend and free resources.
+        
+        SQLite connections are created per operation and closed immediately,
+        so this is a no-op for consistency with other backends.
+        """
+        # SQLite connections are created per operation and closed in finally blocks
+        # No persistent connection to close
+        pass
+
     def _create_schema(self, conn: sqlite3.Connection) -> None:
         """Create database schema if needed.
 
@@ -51,35 +61,55 @@ class SQLiteStorageBackend(StorageBackend):
         conn.execute("CREATE INDEX IF NOT EXISTS idx_chunks_source ON chunks(source)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_chunks_created ON chunks(created_at)")
 
+    _SAVE_BATCH = 512
+
     def _save_full(self, conn: sqlite3.Connection, raglet: RAGlet) -> None:
         """Save full RAGlet (replace all data).
+
+        Inserts chunks and embeddings in fixed-size batches to keep peak
+        memory bounded.  Embeddings are read from the FAISS index via
+        ``get_all_vectors()`` so the lazy ``raglet.embeddings`` property
+        is never materialised during save.
 
         Args:
             conn: SQLite connection
             raglet: RAGlet instance to save
         """
-        # Clear existing data
         conn.execute("DELETE FROM chunks")
         conn.execute("DELETE FROM embeddings")
         conn.execute("DELETE FROM metadata")
 
-        # Insert chunks and embeddings
-        for i, chunk in enumerate(raglet.chunks):
-            cursor = conn.execute(
-                'INSERT INTO chunks (text, source, "index", metadata) VALUES (?, ?, ?, ?)',
-                (chunk.text, chunk.source, chunk.index, json.dumps(chunk.metadata)),
-            )
-            chunk_id = cursor.lastrowid
+        if raglet.chunks:
+            all_vectors = raglet.vector_store.get_all_vectors()
 
-            # Store embedding as BLOB (float32)
-            embedding_array = raglet.embeddings[i].astype(np.float32)
-            embedding_bytes = embedding_array.tobytes()
-            conn.execute(
-                "INSERT INTO embeddings (chunk_id, embedding) VALUES (?, ?)",
-                (chunk_id, embedding_bytes),
-            )
+            n = len(raglet.chunks)
+            batch = self._SAVE_BATCH
+            for start in range(0, n, batch):
+                end = min(start + batch, n)
 
-        # Save metadata
+                conn.executemany(
+                    'INSERT INTO chunks (text, source, "index", metadata) VALUES (?, ?, ?, ?)',
+                    (
+                        (c.text, c.source, c.index, json.dumps(c.metadata))
+                        for c in raglet.chunks[start:end]
+                    ),
+                )
+
+            chunk_ids = [
+                row[0] for row in conn.execute("SELECT id FROM chunks ORDER BY id")
+            ]
+
+            for start in range(0, n, batch):
+                end = min(start + batch, n)
+                conn.executemany(
+                    "INSERT INTO embeddings (chunk_id, embedding) VALUES (?, ?)",
+                    (
+                        (chunk_ids[i], all_vectors[i].tobytes())
+                        for i in range(start, end)
+                    ),
+                )
+
+        # Always save metadata (even for empty RAGlet)
         conn.execute(
             "INSERT INTO metadata (key, value) VALUES (?, ?)",
             ("version", self.VERSION),
@@ -108,35 +138,43 @@ class SQLiteStorageBackend(StorageBackend):
             conn: SQLite connection
             raglet: RAGlet instance with new chunks
         """
-        # Get current chunk count
         current_count = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
         new_chunks = raglet.chunks[current_count:]
 
         if not new_chunks:
             return
 
-        # Add new chunks
-        for i, chunk in enumerate(new_chunks):
-            chunk_index = current_count + i
-            cursor = conn.execute(
+        all_vectors = raglet.vector_store.get_all_vectors()
+
+        n = len(new_chunks)
+        batch = self._SAVE_BATCH
+        for start in range(0, n, batch):
+            end = min(start + batch, n)
+            conn.executemany(
                 'INSERT INTO chunks (text, source, "index", metadata) VALUES (?, ?, ?, ?)',
-                (chunk.text, chunk.source, chunk.index, json.dumps(chunk.metadata)),
+                (
+                    (c.text, c.source, c.index, json.dumps(c.metadata))
+                    for c in new_chunks[start:end]
+                ),
             )
-            chunk_id = cursor.lastrowid
 
-            # Store embedding as BLOB (float32)
-            embedding_array = raglet.embeddings[chunk_index].astype(np.float32)
-            embedding_bytes = embedding_array.tobytes()
-            conn.execute(
+        max_id_result = conn.execute("SELECT MAX(id) FROM chunks").fetchone()
+        max_id = max_id_result[0] if max_id_result[0] is not None else 0
+        new_chunk_ids = list(range(max_id - n + 1, max_id + 1))
+
+        for start in range(0, n, batch):
+            end = min(start + batch, n)
+            conn.executemany(
                 "INSERT INTO embeddings (chunk_id, embedding) VALUES (?, ?)",
-                (chunk_id, embedding_bytes),
+                (
+                    (new_chunk_ids[i], all_vectors[current_count + i].tobytes())
+                    for i in range(start, end)
+                ),
             )
 
-        # Update metadata
-        new_count = len(raglet.chunks)
         conn.execute(
             "INSERT OR REPLACE INTO metadata (key, value) VALUES (?, ?)",
-            ("chunk_count", str(new_count)),
+            ("chunk_count", str(len(raglet.chunks))),
         )
 
     def _load_config(self, conn: sqlite3.Connection) -> RAGletConfig:
@@ -178,6 +216,10 @@ class SQLiteStorageBackend(StorageBackend):
     def _load_embeddings(self, conn: sqlite3.Connection) -> np.ndarray:
         """Load embeddings from database.
 
+        Pre-allocates a single contiguous array and fills it row-by-row,
+        avoiding the intermediate list-of-arrays that ``np.vstack`` would
+        require (which doubles peak memory at scale).
+
         Args:
             conn: SQLite connection
 
@@ -195,18 +237,14 @@ class SQLiteStorageBackend(StorageBackend):
 
         embedding_dim = int(row[0])
 
-        # Load all embeddings
-        embeddings_list: list[np.ndarray] = []
-        for row in conn.execute("SELECT embedding FROM embeddings ORDER BY chunk_id"):
-            embedding_bytes = row[0]
-            embedding_array = np.frombuffer(embedding_bytes, dtype=np.float32)
-            embeddings_list.append(embedding_array)
+        n = int(conn.execute("SELECT COUNT(*) FROM embeddings").fetchone()[0])
+        if n == 0:
+            return np.empty((0, embedding_dim), dtype=np.float32)
 
-        if not embeddings_list:
-            empty_array: np.ndarray = np.array([]).reshape(0, embedding_dim).astype(np.float32)
-            return empty_array
+        embeddings = np.empty((n, embedding_dim), dtype=np.float32)
+        for i, row in enumerate(conn.execute("SELECT embedding FROM embeddings ORDER BY chunk_id")):
+            embeddings[i] = np.frombuffer(row[0], dtype=np.float32)
 
-        embeddings: np.ndarray = np.vstack(embeddings_list).astype(np.float32)
         return embeddings
 
     def save(
@@ -275,16 +313,10 @@ class SQLiteStorageBackend(StorageBackend):
 
         conn = sqlite3.connect(str(file_path))
         try:
-            # Load config
             config = self._load_config(conn)
-
-            # Load chunks
             chunks = self._load_chunks(conn)
-
-            # Load embeddings
             embeddings = self._load_embeddings(conn)
 
-            # Validate embedding dimension matches model dimension
             from raglet.embeddings.generator import SentenceTransformerGenerator
 
             embedding_generator = SentenceTransformerGenerator(config.embedding)
@@ -302,7 +334,6 @@ class SQLiteStorageBackend(StorageBackend):
                         f"the saved embeddings."
                     )
 
-            # Create RAGlet (will rebuild FAISS index on init)
             return RAGlet(
                 chunks=chunks,
                 config=config,
@@ -331,6 +362,9 @@ class SQLiteStorageBackend(StorageBackend):
     ) -> None:
         """Add chunks incrementally to existing storage.
 
+        Processes chunks in batches to balance performance and safety.
+        Uses batch inserts within each batch for efficiency.
+
         Args:
             file_path: Path to storage file
             chunks: New chunks to add
@@ -348,36 +382,70 @@ class SQLiteStorageBackend(StorageBackend):
         if not file_path_obj.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
 
+        # Batch size: balance between performance and safety
+        # Smaller batches = safer (less memory, shorter transactions)
+        # Larger batches = faster (fewer round-trips)
+        BATCH_SIZE = 512
+
         conn = sqlite3.connect(str(file_path))
         try:
             self._create_schema(conn)
 
-            # Add new chunks
-            for i, chunk in enumerate(chunks):
-                cursor = conn.execute(
+            # Get the current max chunk_id to calculate new IDs
+            result = conn.execute("SELECT MAX(id) FROM chunks")
+            max_id_row = result.fetchone()
+            max_id = max_id_row[0] if max_id_row[0] is not None else 0
+
+            # Process in batches
+            total_chunks = len(chunks)
+            for batch_start in range(0, total_chunks, BATCH_SIZE):
+                batch_end = min(batch_start + BATCH_SIZE, total_chunks)
+                batch_chunks = chunks[batch_start:batch_end]
+                batch_embeddings = embeddings[batch_start:batch_end]
+                batch_size = len(batch_chunks)
+
+                # Prepare chunk data for this batch
+                chunk_data = [
+                    (chunk.text, chunk.source, chunk.index, json.dumps(chunk.metadata))
+                    for chunk in batch_chunks
+                ]
+
+                # Batch insert chunks for this batch
+                cursor = conn.executemany(
                     'INSERT INTO chunks (text, source, "index", metadata) VALUES (?, ?, ?, ?)',
-                    (chunk.text, chunk.source, chunk.index, json.dumps(chunk.metadata)),
+                    chunk_data,
                 )
-                chunk_id = cursor.lastrowid
 
-                # Store embedding as BLOB (float32)
-                embedding_array = embeddings[i].astype(np.float32)
-                embedding_bytes = embedding_array.tobytes()
-                conn.execute(
+                # Calculate chunk IDs for this batch (sequential after current max_id)
+                batch_chunk_ids = list(range(max_id + 1, max_id + 1 + batch_size))
+
+                # Prepare embedding data for this batch
+                embedding_data = [
+                    (chunk_id, batch_embeddings[i].astype(np.float32, copy=False).tobytes())
+                    for i, chunk_id in enumerate(batch_chunk_ids)
+                ]
+
+                # Batch insert embeddings for this batch
+                conn.executemany(
                     "INSERT INTO embeddings (chunk_id, embedding) VALUES (?, ?)",
-                    (chunk_id, embedding_bytes),
+                    embedding_data,
                 )
 
-            # Update metadata
+                # Update max_id for next batch
+                max_id += batch_size
+
+                # Commit after each batch (safer - partial progress on failure)
+                conn.commit()
+
+            # Update metadata once at the end
             result = conn.execute("SELECT value FROM metadata WHERE key = ?", ("chunk_count",))
             row = result.fetchone()
             current_count = int(row[0]) if row else 0
-            new_count = current_count + len(chunks)
+            new_count = current_count + total_chunks
             conn.execute(
                 "INSERT OR REPLACE INTO metadata (key, value) VALUES (?, ?)",
                 ("chunk_count", str(new_count)),
             )
-
             conn.commit()
         except Exception as e:
             conn.rollback()
