@@ -136,7 +136,7 @@ class RAGlet:
         """
         if not self._embedding_chunks:
             dim = self.embedding_generator.get_dimension()
-            return np.empty((0, dim), dtype=np.float32)
+            return np.empty((0, dim), dtype=np.float32)  # type: ignore[no-any-return]
         if len(self._embedding_chunks) > 1:
             self._embedding_chunks = [np.vstack(self._embedding_chunks)]
         return self._embedding_chunks[0]
@@ -641,14 +641,14 @@ class RAGlet:
 
     def close(self) -> None:
         """Close the RAGlet instance and free all resources.
-        
+
         Cascades cleanup to all owned components:
         - FAISSVectorStore: Resets and frees C++ heap memory
         - SentenceTransformerGenerator: Shuts down loky executor (if applicable)
-        
+
         After calling close(), the instance should not be used. Methods will
         raise RuntimeError if called after close().
-        
+
         This is deterministic cleanup - recommended for loops, pipelines, and
         test suites to prevent resource accumulation.
         """
@@ -673,7 +673,7 @@ class RAGlet:
 
     def __del__(self) -> None:
         """Destructor - calls close() as a safety net.
-        
+
         Python's GC doesn't guarantee when __del__ runs, and circular references
         can prevent it entirely. Prefer explicit close() for deterministic cleanup.
         """
@@ -687,14 +687,14 @@ class RAGlet:
 
     def __enter__(self) -> "RAGlet":
         """Context manager entry - returns self.
-        
+
         Allows using RAGlet as a context manager:
-        
+
         ```python
         with RAGlet.load("data.raglet") as raglet:
             results = raglet.search("query")
         ```
-        
+
         Returns:
             Self (RAGlet instance)
         """
@@ -702,9 +702,9 @@ class RAGlet:
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         """Context manager exit - calls close().
-        
+
         Ensures cleanup happens even if an exception occurs.
-        
+
         Args:
             exc_type: Exception type (if any)
             exc_val: Exception value (if any)

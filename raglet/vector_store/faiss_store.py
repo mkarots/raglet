@@ -8,6 +8,19 @@ from raglet.core.chunk import Chunk
 from raglet.vector_store.interfaces import VectorStore
 
 
+def _normalize_l2(vectors: np.ndarray) -> np.ndarray:
+    """L2-normalize rows in-place and return the array.
+
+    Pure numpy replacement for faiss.normalize_L2, which segfaults on
+    macOS ARM64 (Apple Silicon) with certain faiss-cpu builds when the
+    array is large enough to trigger OpenMP threading.
+    """
+    norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+    norms = np.maximum(norms, 1e-12)
+    vectors /= norms
+    return vectors
+
+
 class FAISSVectorStore(VectorStore):
     """Vector store using FAISS with cosine similarity (IndexFlatIP)."""
 
@@ -51,7 +64,7 @@ class FAISSVectorStore(VectorStore):
         if vectors.dtype != np.float32 or not vectors.flags['C_CONTIGUOUS']:
             vectors = np.asarray(vectors, dtype=np.float32, order='C')
 
-        faiss.normalize_L2(vectors)
+        _normalize_l2(vectors)
         self.index.add(vectors)
         self.chunks.extend(chunks)
 
@@ -75,30 +88,19 @@ class FAISSVectorStore(VectorStore):
                 f"match store dimension ({self.embedding_dim})"
             )
 
-        # Ensure query is float32 and contiguous
-        # Only copy if necessary (dtype mismatch or not C-contiguous)
         if query_vector.dtype != np.float32 or not query_vector.flags['C_CONTIGUOUS']:
             query_vector = np.asarray(query_vector, dtype=np.float32, order='C')
         query_vector = query_vector.reshape(1, -1)
 
-        # Normalize query vector for cosine similarity (IndexFlatIP)
-        faiss.normalize_L2(query_vector)
+        _normalize_l2(query_vector)
 
-        # Search returns inner product scores (cosine similarity) and indices
         similarities, indices = self.index.search(query_vector, top_k)
 
-        # Inner product with normalized vectors = cosine similarity (0-1 range)
         results = []
         for i, idx in enumerate(indices[0]):
-            # FAISS returns -1 for invalid indices when there aren't enough vectors
             if idx >= 0 and idx < len(self.chunks):
                 chunk = self.chunks[idx]
-
-                # Inner product is already similarity score (higher = more similar)
-                # Range: -1.0 to 1.0 (typically 0.0 to 1.0 for normalized vectors)
                 score = float(similarities[0][i])
-
-                # Create a copy with score set
                 result_chunk = Chunk(
                     text=chunk.text,
                     source=chunk.source,
@@ -130,15 +132,14 @@ class FAISSVectorStore(VectorStore):
         """
         n = int(self.index.ntotal)
         if n == 0:
-            return np.empty((0, self.embedding_dim), dtype=np.float32)
-        return self.index.reconstruct_n(0, n)
+            return np.empty((0, self.embedding_dim), dtype=np.float32)  # type: ignore[no-any-return]
+        return self.index.reconstruct_n(0, n)  # type: ignore[no-any-return]
 
     def reset(self) -> None:
         """Reset the vector store (clear all vectors and chunks).
-        
+
         Useful for cleanup and preventing resource accumulation across iterations.
         This explicitly clears the FAISS index, which may help with OpenMP thread cleanup.
         """
-        # Create a new empty index (old one will be garbage collected)
         self.index = faiss.IndexFlatIP(self.embedding_dim)
         self.chunks.clear()

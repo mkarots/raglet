@@ -41,6 +41,15 @@ def _default_batch_size() -> int:
     return 32
 
 
+def _default_fp16() -> bool:
+    """Enable fp16 by default on GPU devices (MPS/CUDA).
+
+    Half-precision halves memory bandwidth pressure and gives 1.5-2x throughput
+    on GPU at negligible quality loss for retrieval tasks. No benefit on CPU.
+    """
+    return _select_device() in ("mps", "cuda")
+
+
 @dataclass
 class ChunkingConfig:
     """Configuration for text chunking."""
@@ -107,13 +116,12 @@ class EmbeddingConfig:
     """
     device: str = field(default_factory=_select_device)
     normalize: bool = True  # Deprecated: Normalization is handled by FAISS for consistency
-    use_fp16: bool = False
+    use_fp16: bool = field(default_factory=_default_fp16)
     """Enable float16 (half-precision) inference on MPS or CUDA devices.
 
-    Typically gives 1.5–2× throughput on Apple Silicon MPS at negligible
-    quality loss for retrieval tasks. Has no effect on CPU (float16 is slow
-    on x86 without AVX-512 support). Embeddings are always returned as
-    float32 regardless of this setting.
+    Defaults to True on MPS/CUDA, False on CPU. Typically gives 1.5-2x
+    throughput at negligible quality loss for retrieval tasks. Embeddings
+    are always returned as float32 regardless of this setting.
     """
     torch_compile: bool = False
     """Enable torch.compile() graph optimisation. Requires PyTorch ≥ 2.0.
@@ -126,20 +134,71 @@ class EmbeddingConfig:
     def validate(self) -> None:
         """Validate embedding configuration.
 
+        Falls back to CPU with a warning if the requested device is not
+        available (e.g. ``device="cuda"`` on macOS, or ``device="mps"``
+        on Linux).  Also adjusts ``use_fp16`` since half-precision has
+        no benefit on CPU.
+
         Raises:
             ValueError: If configuration is invalid
         """
+        import warnings
+
         if not self.model:
             raise ValueError("embedding model must be specified")
         if self.batch_size < 1:
             raise ValueError("batch_size must be >= 1")
         if self.device not in ["cpu", "cuda", "mps"]:
             raise ValueError("device must be 'cpu', 'cuda', or 'mps'")
+
+        if self.device == "cuda":
+            try:
+                import torch
+
+                if not torch.cuda.is_available():
+                    warnings.warn(
+                        "device='cuda' requested but CUDA is not available. "
+                        "Falling back to CPU.",
+                        stacklevel=2,
+                    )
+                    self.device = "cpu"
+                    self.use_fp16 = False
+            except ImportError:
+                warnings.warn(
+                    "device='cuda' requested but PyTorch is not installed. "
+                    "Falling back to CPU.",
+                    stacklevel=2,
+                )
+                self.device = "cpu"
+                self.use_fp16 = False
+
+        if self.device == "mps":
+            try:
+                import torch
+
+                if not (torch.backends.mps.is_available() and torch.backends.mps.is_built()):
+                    warnings.warn(
+                        "device='mps' requested but MPS is not available. "
+                        "Falling back to CPU.",
+                        stacklevel=2,
+                    )
+                    self.device = "cpu"
+                    self.use_fp16 = False
+            except ImportError:
+                warnings.warn(
+                    "device='mps' requested but PyTorch is not installed. "
+                    "Falling back to CPU.",
+                    stacklevel=2,
+                )
+                self.device = "cpu"
+                self.use_fp16 = False
+
         if self.use_fp16 and self.device == "cpu":
-            raise ValueError(
-                "use_fp16=True has no benefit on CPU and may reduce accuracy. "
-                "Set device='mps' or device='cuda', or set use_fp16=False."
+            warnings.warn(
+                "use_fp16=True has no benefit on CPU. Setting use_fp16=False.",
+                stacklevel=2,
             )
+            self.use_fp16 = False
 
     def to_dict(self) -> dict[str, Any]:
         """Convert config to dictionary.
@@ -171,7 +230,7 @@ class EmbeddingConfig:
             batch_size=data.get("batch_size", _default_batch_size()),
             device=data.get("device", _select_device()),
             normalize=data.get("normalize", True),
-            use_fp16=data.get("use_fp16", False),
+            use_fp16=data.get("use_fp16", _default_fp16()),
             torch_compile=data.get("torch_compile", False),
         )
 

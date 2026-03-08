@@ -15,16 +15,22 @@ class TestEmbeddingConfig:
 
     def test_default_values(self):
         """Test default configuration values."""
+        from raglet.config.config import _default_fp16
+
         config = EmbeddingConfig()
         assert config.model == "all-MiniLM-L6-v2"
-        assert config.batch_size == 32
-        # Device is auto-detected, should be one of: cpu, cuda, mps
+        # batch_size is device-aware: 32 (CPU), 128 (MPS), 256 (CUDA)
+        assert config.batch_size in [32, 128, 256]
         assert config.device in ["cpu", "cuda", "mps"]
-        assert config.normalize is True  # Default changed to True for cosine similarity
+        assert config.normalize is True
+        assert config.use_fp16 is _default_fp16()
+        assert config.torch_compile is False
 
     def test_validation_success(self):
         """Test successful validation."""
-        config = EmbeddingConfig(model="all-MiniLM-L6-v2", batch_size=64, device="cpu")
+        config = EmbeddingConfig(
+            model="all-MiniLM-L6-v2", batch_size=64, device="cpu", use_fp16=False,
+        )
         config.validate()  # Should not raise
 
     def test_validation_empty_model(self):

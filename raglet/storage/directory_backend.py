@@ -17,10 +17,10 @@ class DirectoryStorageBackend(StorageBackend):
     """Directory-based storage backend for RAGlet instances."""
 
     VERSION = "1.0.0"
-    
+
     def close(self) -> None:
         """Close the storage backend and free resources.
-        
+
         Directory backend doesn't hold persistent resources, so this is a no-op
         for consistency with other backends.
         """
@@ -144,30 +144,30 @@ class DirectoryStorageBackend(StorageBackend):
         # Append embeddings efficiently using memory-mapped append
         # Instead of loading everything, we append only the new embeddings
         embeddings_path = dir_path / "embeddings.npy"
-        
+
         # Get embeddings for new chunks only
         new_embeddings = raglet.embeddings[current_count:]
-        
+
         if embeddings_path.exists():
             # Use memory-mapped file to append without loading everything into memory
             # Load existing file in memory-mapped mode (read-only)
             existing_embeddings = np.load(str(embeddings_path), mmap_mode='r')
-            
+
             # Create new array with combined size
             total_count = len(existing_embeddings) + len(new_embeddings)
             embedding_dim = existing_embeddings.shape[1] if len(existing_embeddings) > 0 else raglet.embedding_generator.get_dimension()
-            
+
             # Allocate new array and copy existing + new
             updated_embeddings = np.empty((total_count, embedding_dim), dtype=np.float32)
             updated_embeddings[:len(existing_embeddings)] = existing_embeddings
             updated_embeddings[len(existing_embeddings):] = new_embeddings
-            
+
             # Close memory-mapped file
             del existing_embeddings
         else:
             # Create new file with new embeddings
             updated_embeddings = new_embeddings.astype(np.float32)
-        
+
         np.save(str(embeddings_path), updated_embeddings)
 
         # Update metadata

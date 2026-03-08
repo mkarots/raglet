@@ -21,7 +21,7 @@ class SQLiteStorageBackend(StorageBackend):
 
     def close(self) -> None:
         """Close the storage backend and free resources.
-        
+
         SQLite connections are created per operation and closed immediately,
         so this is a no-op for consistency with other backends.
         """
@@ -239,13 +239,13 @@ class SQLiteStorageBackend(StorageBackend):
 
         n = int(conn.execute("SELECT COUNT(*) FROM embeddings").fetchone()[0])
         if n == 0:
-            return np.empty((0, embedding_dim), dtype=np.float32)
+            return np.empty((0, embedding_dim), dtype=np.float32)  # type: ignore[no-any-return]
 
         embeddings = np.empty((n, embedding_dim), dtype=np.float32)
         for i, row in enumerate(conn.execute("SELECT embedding FROM embeddings ORDER BY chunk_id")):
             embeddings[i] = np.frombuffer(row[0], dtype=np.float32)
 
-        return embeddings
+        return embeddings  # type: ignore[no-any-return]
 
     def save(
         self,
@@ -411,7 +411,7 @@ class SQLiteStorageBackend(StorageBackend):
                 ]
 
                 # Batch insert chunks for this batch
-                cursor = conn.executemany(
+                conn.executemany(
                     'INSERT INTO chunks (text, source, "index", metadata) VALUES (?, ?, ?, ?)',
                     chunk_data,
                 )

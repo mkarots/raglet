@@ -3,8 +3,7 @@
 import atexit
 import os
 import threading
-import time
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 
@@ -17,11 +16,11 @@ os.environ.setdefault("JOBLIB_MULTIPROCESSING", "0")
 
 def _cleanup_torch_workers() -> None:
     """Release PyTorch shared-memory semaphores before process exit.
-    
+
     PyTorch allocates POSIX named semaphores for shared-memory coordination
     between its internal CPU worker threads. These must be released before FAISS
     runs its own cleanup at process exit to prevent use-after-free crashes.
-    
+
     Note: We also set environment variables (LOKY_MAX_CPU_COUNT=1, JOBLIB_MULTIPROCESSING=0)
     to minimize semaphore allocation, but cleanup is still needed for any that are created.
     """
@@ -62,7 +61,7 @@ if TYPE_CHECKING:
 # loaded model's state are included so that differently-configured generators do
 # not share an incompatible cached instance.
 # Value: SentenceTransformer instance
-_model_cache: dict[Tuple[str, str, bool, bool], "SentenceTransformer"] = {}
+_model_cache: dict[tuple[str, str, bool, bool], "SentenceTransformer"] = {}
 _cache_lock = threading.Lock()
 
 
@@ -83,11 +82,12 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
         self.config.validate()
         self._output = output
 
-        # Check if sentence-transformers is available
         if SentenceTransformer is None:
             raise ImportError(
-                "sentence-transformers is required but not installed. "
-                "Install with: pip install sentence-transformers"
+                "sentence-transformers (and PyTorch) are required but not installed. "
+                "Install with: pip install sentence-transformers torch\n"
+                "Note: PyTorch does not support Alpine Linux (musl). "
+                "Use a glibc-based image (e.g. python:3.11-slim) instead of Alpine."
             )
 
         # Cache key includes every config field that affects the model's runtime state.
@@ -209,7 +209,7 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
         batch_embeddings = self.model.encode(
             texts,
             normalize_embeddings=False,  # FAISS normalises before indexing
-            show_progress_bar=False,
+            show_progress_bar=True,
             convert_to_numpy=True,       # avoids an extra tensor→ndarray conversion
             batch_size=self.config.batch_size,
         )
@@ -222,7 +222,7 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
         output[:] = batch_embeddings
         return output  # type: ignore[no-any-return]
 
-    
+
     def generate_single(self, text: str) -> np.ndarray:
         """Generate embedding for a single text string.
 
@@ -246,17 +246,17 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
             Embedding dimension (e.g., 384 for all-MiniLM-L6-v2)
         """
         return int(self._dimension)
-    
+
     def close(self) -> None:
         """Close the embedding generator and free resources.
-        
+
         Note: sentence-transformers uses loky internally for parallel processing,
         which may cause semaphore leak warnings. These are harmless warnings that
         don't affect functionality - loky executors are cleaned up at process shutdown.
         """
         if not hasattr(self, 'model') or self.model is None:
             return
-        
+
         # Clear reference (but don't remove from cache if cached)
         # Note: We don't attempt to clean up loky executors here because:
         # 1. sentence-transformers manages them internally
@@ -267,15 +267,15 @@ class SentenceTransformerGenerator(EmbeddingGenerator):
 
 def clear_model_cache() -> None:
     """Clear the model cache and free all cached models.
-    
+
     This function should be called when you want to free all cached models,
     for example at the end of a test suite or when switching models.
-    
+
     Note: This will close all cached models, so any generators still using
     them will need to be recreated.
     """
     global _model_cache
-    
+
     with _cache_lock:
         # Close all cached models
         for model in _model_cache.values():
@@ -290,5 +290,5 @@ def clear_model_cache() -> None:
                                 pass
             except Exception:
                 pass
-        
+
         _model_cache.clear()

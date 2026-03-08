@@ -22,10 +22,10 @@ class ZipStorageBackend(StorageBackend):
     """
 
     VERSION = "1.0.0"
-    
+
     def close(self) -> None:
         """Close the storage backend and free resources.
-        
+
         Zip backend doesn't hold persistent resources, so this is a no-op
         for consistency with other backends.
         """
