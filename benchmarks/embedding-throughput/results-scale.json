@@ -1,0 +1,123 @@
+{
+  "config": {
+    "model": "all-MiniLM-L6-v2",
+    "device": "mps",
+    "batch_size": 128,
+    "fp16": true,
+    "max_seq_length": 256,
+    "chunk_size": 256,
+    "chunk_overlap": 50,
+    "chunk_strategy": "sentence-aware",
+    "runs_per_size": 3
+  },
+  "results": [
+    {
+      "text_size": "102 KB",
+      "text_bytes": 104857,
+      "approx_llm_tokens": 26214,
+      "chunks": 138,
+      "avg_chunk_chars": 956,
+      "mean_embed_s": 0.433,
+      "mean_chunks_per_s": 322.4,
+      "min_chunks_per_s": 273.4,
+      "max_chunks_per_s": 348.6,
+      "llm_tokens_per_s": 77084
+    },
+    {
+      "text_size": "512 KB",
+      "text_bytes": 524288,
+      "approx_llm_tokens": 131072,
+      "chunks": 688,
+      "avg_chunk_chars": 960,
+      "mean_embed_s": 1.82,
+      "mean_chunks_per_s": 378.5,
+      "min_chunks_per_s": 360.1,
+      "max_chunks_per_s": 388.9,
+      "llm_tokens_per_s": 90817
+    },
+    {
+      "text_size": "1 MB",
+      "text_bytes": 1048576,
+      "approx_llm_tokens": 262144,
+      "chunks": 1377,
+      "avg_chunk_chars": 960,
+      "mean_embed_s": 3.491,
+      "mean_chunks_per_s": 394.5,
+      "min_chunks_per_s": 393.2,
+      "max_chunks_per_s": 395.5,
+      "llm_tokens_per_s": 94644
+    },
+    {
+      "text_size": "2 MB",
+      "text_bytes": 2097152,
+      "approx_llm_tokens": 524288,
+      "chunks": 2755,
+      "avg_chunk_chars": 960,
+      "mean_embed_s": 6.959,
+      "mean_chunks_per_s": 395.9,
+      "min_chunks_per_s": 394.3,
+      "max_chunks_per_s": 396.8,
+      "llm_tokens_per_s": 94990
+    },
+    {
+      "text_size": "5 MB",
+      "text_bytes": 5242880,
+      "approx_llm_tokens": 1310720,
+      "chunks": 6887,
+      "avg_chunk_chars": 960,
+      "mean_embed_s": 17.326,
+      "mean_chunks_per_s": 397.5,
+      "min_chunks_per_s": 396.6,
+      "max_chunks_per_s": 398.0,
+      "llm_tokens_per_s": 95389
+    },
+    {
+      "text_size": "10 MB",
+      "text_bytes": 10485760,
+      "approx_llm_tokens": 2621440,
+      "chunks": 13774,
+      "avg_chunk_chars": 960,
+      "mean_embed_s": 35.437,
+      "mean_chunks_per_s": 388.7,
+      "min_chunks_per_s": 385.8,
+      "max_chunks_per_s": 392.8,
+      "llm_tokens_per_s": 93287
+    },
+    {
+      "text_size": "20 MB",
+      "text_bytes": 20971520,
+      "approx_llm_tokens": 5242880,
+      "chunks": 27548,
+      "avg_chunk_chars": 960,
+      "mean_embed_s": 72.014,
+      "mean_chunks_per_s": 382.5,
+      "min_chunks_per_s": 381.1,
+      "max_chunks_per_s": 383.4,
+      "llm_tokens_per_s": 91808
+    },
+    {
+      "text_size": "50 MB",
+      "text_bytes": 52428800,
+      "approx_llm_tokens": 13107200,
+      "chunks": 68871,
+      "avg_chunk_chars": 960,
+      "mean_embed_s": 176.278,
+      "mean_chunks_per_s": 390.7,
+      "min_chunks_per_s": 385.7,
+      "max_chunks_per_s": 395.5,
+      "llm_tokens_per_s": 93777
+    },
+    {
+      "text_size": "100 MB",
+      "text_bytes": 104857600,
+      "approx_llm_tokens": 26214400,
+      "chunks": 137743,
+      "avg_chunk_chars": 960,
+      "mean_embed_s": 347.503,
+      "mean_chunks_per_s": 396.4,
+      "min_chunks_per_s": 394.0,
+      "max_chunks_per_s": 398.0,
+      "llm_tokens_per_s": 95133
+    }
+  ]
+}

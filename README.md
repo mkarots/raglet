@@ -10,7 +10,7 @@
 
 **Portable memory for small text corpora. No servers, no API keys, no infrastructure.**
 
-There's a class of knowledge that's too big for a prompt but too small to justify a vector database: a codebase, a Slack export, a folder of meeting notes. raglet turns that text into a single directory you can save, git commit, or carry to another machine.
+There's a class of knowledge that's too big for a prompt but too small to justify a vector database: a codebase, a Slack export, a folder of meeting notes. raglet turns that text into a searchable directory you can save, git commit, or carry to another machine.
 
 ```bash
 pip install raglet
@@ -62,6 +62,22 @@ results = rag.search("your query")
 
 ---
 
+## When to use raglet
+
+raglet is designed for workspace-scale corpora. The embedding pipeline processes ~95K LLM tokens/sec on Apple Silicon (MPS). Build is a one-time cost — after that, search stays under 15 ms regardless of dataset size.
+
+| Corpus size | LLM tokens | Build time (MPS) | Search p50 | raglet? |
+|-------------|------------|------------------|------------|---------|
+| < 8 KB | < 10K | — | — | Use a prompt directly |
+| 8 KB – 1 MB | 10K – 262K | ~3.5s | ~4 ms | ✅ Sweet spot |
+| 1 – 10 MB | 262K – 2.6M | 3.5–35s | ~6 ms | ✅ Works great |
+| 10 – 100 MB | 2.6M – 26M | 35s – 6 min | ~10 ms | ⚠️ Works — build is a one-time cost |
+| > 100 MB | > 26M | hours | — | ❌ Use a vector database instead |
+
+If your corpus is larger than ~100 MB, raglet is the wrong tool. Use a persistent vector database (Chroma, Weaviate, Pinecone) instead.
+
+---
+
 ## The `.raglet/` directory
 
 When you save a raglet, you get a plain, inspectable directory:
@@ -86,7 +102,7 @@ cat .raglet/config.json
 # Git commit the whole thing
 git add .raglet/ && git commit -m "update knowledge base"
 
-# Package it for sharing
+# Export for sharing
 raglet package --raglet .raglet/ --format zip --out knowledge.zip
 ```
 
@@ -107,48 +123,54 @@ docker pull mkarots/raglet
 docker run -v /path/to/project:/workspace mkarots/raglet build docs/ --out .raglet/
 ```
 
+> **Note:** Alpine Linux is not supported. Use `python:3.11-slim` or similar images.
+
 ---
 
 ## CLI
 
 ```bash
 # Build a knowledge base
-raglet build docs/ --out raglet-docs/
-raglet build docs/ --out raglet-docs/ --chunk-size 1024 --model all-mpnet-base-v2
+raglet build docs/ --out .raglet/
+raglet build docs/ src/ "*.md" --out .raglet/ --chunk-size 1024
 
 # Search it
 raglet query "how does authentication work?" --raglet .raglet/
-raglet query "what is X?" --raglet knowledge.sqlite --top-k 10
+raglet query "what is X?" --raglet memory.sqlite --top-k 10
 
-# Add files incrementally
+# Add files, directories, or glob patterns incrementally
 raglet add new_file.txt --raglet .raglet/
+raglet add new-docs/ --raglet .raglet/
+raglet add "*.md" --raglet .raglet/ --ignore __pycache__
 
 # Convert between formats
 raglet package --raglet .raglet/ --format zip --out export.zip
-raglet package --raglet export.zip --format sqlite --out knowledge.sqlite
+raglet package --raglet .raglet/ --format sqlite --out memory.sqlite
 ```
 
 ---
 
 ## Storage formats
 
-raglet supports three formats. All can be loaded with `RAGlet.load()` — it auto-detects from the path.
+raglet supports three formats. All load with `RAGlet.load()` — format is auto-detected from the path.
 
-| Format | Best for | Incremental updates |
-|--------|----------|-------------------|
-| `.raglet/` directory | Development, git-tracked knowledge bases | ✅ |
-| `.sqlite` / `.db` | Single-file portability, production use | ✅ |
-| `.zip` | Sharing, export/import | ❌ read-only |
+| Format | Use when | Incremental updates |
+|--------|----------|---------------------|
+| `.raglet/` directory | Default — development, git-tracked knowledge bases | ✅ |
+| `.sqlite` | Agent memory loops — frequent appends, single-file deployment | ✅ True appends |
+| `.zip` | Export and sharing only | ❌ Read-only |
 
 ```python
-rag.save(".raglet/")          # directory
-rag.save("knowledge.sqlite")  # SQLite
+rag.save(".raglet/")          # directory (default)
+rag.save("memory.sqlite")     # SQLite — true incremental appends
 rag.save("export.zip")        # zip archive
 
 rag = RAGlet.load(".raglet/")
-rag = RAGlet.load("knowledge.sqlite")
+rag = RAGlet.load("memory.sqlite")
 rag = RAGlet.load("export.zip")
 ```
+
+**When to use SQLite:** if you're running an agent loop that appends conversation turns or observations continuously, SQLite is the better choice — it does true SQL `INSERT` operations rather than rewriting files on each save.
 
 ---
 
@@ -181,25 +203,22 @@ raglet handles retrieval. You handle generation.
 from pathlib import Path
 from raglet import RAGlet
 
-rag = RAGlet.load(".raglet/") if Path(".raglet/").exists() else RAGlet.from_files(["docs/"])
-unsaved = 0
+# SQLite is the right format for agent memory — true incremental appends
+path = "memory.sqlite"
+rag = RAGlet.load(path) if Path(path).exists() else RAGlet.from_files([])
 
 while True:
     query = input("You: ")
     if query == "exit":
-        if unsaved: rag.save(".raglet/")
+        rag.save(path)
         break
 
     results = rag.search(query, top_k=5)
     response = your_llm(results, query)
 
-    rag.add_text(query, source="chat")
-    rag.add_text(response, source="chat")
-    unsaved += len(query) + len(response)
-
-    if unsaved >= 1000:
-        rag.save(".raglet/")
-        unsaved = 0
+    rag.add_text(query, source="user")
+    rag.add_text(response, source="assistant")
+    rag.save(path, incremental=True)
 ```
 
 ### Incremental updates (cheap appends)
@@ -207,9 +226,10 @@ while True:
 The initial `from_files()` is the expensive step — it embeds all the text. After that, appending new content only embeds the **new** chunks. A 100 KB file appends in ~0.3s regardless of how large the existing raglet is.
 
 ```python
-# Add files (only new content is embedded)
+# Add files, directories, or glob patterns
 rag.add_file("new_doc.txt")
 rag.add_files(["file1.txt", "file2.md"])
+rag.add_files(["new-docs/"])
 
 # Add raw text
 rag.add_text("Some text", source="manual")
@@ -245,6 +265,18 @@ results = rag.search("query", top_k=10, similarity_threshold=0.7)
 
 ---
 
+## Known limitations
+
+**File formats:** v0.1.0 supports `.txt` and `.md` files only. PDF, DOCX, and HTML are on the roadmap. For unsupported formats, extract text first and use `add_text()`.
+
+**Corpus size:** raglet is workspace-scale, not internet-scale. Search stays under 15 ms up to 100 MB, but build time becomes significant (100 MB takes ~6 minutes on MPS). Above ~100 MB, use a proper vector database.
+
+**No file change detection:** raglet does not watch for file changes. If a file is modified, rebuild from scratch with `from_files()`. Incremental updates (`add_file`, `add_files`) are for adding new files only.
+
+**CPU-only machines:** embedding is ~10–20× slower without a GPU or MPS. Search latency (<10 ms) is hardware-independent and unaffected.
+
+---
+
 ## Features
 
 - ✅ Text extraction from `.txt` and `.md` files
@@ -253,7 +285,7 @@ results = rag.search("query", top_k=10, similarity_threshold=0.7)
 - ✅ Vector search via FAISS
 - ✅ Three portable formats: directory, SQLite, zip
 - ✅ Incremental updates
-- ✅ CLI interface
+- ✅ CLI — `build`, `query`, `add` (files, directories, globs), `package`
 - ✅ Docker image
 
 ---
@@ -269,6 +301,16 @@ results = rag.search("query", top_k=10, similarity_threshold=0.7)
 **Open format** — JSON files you can read, edit, and extract. No proprietary format, no lock-in.
 
 **Zero infrastructure** — `pip install raglet` or `docker run`. That's it.
+
+---
+
+## Roadmap
+
+```
+v0.1.0 (now)   Semantic search, save/load, incremental updates, CLI
+v0.2.0         PDF, DOCX, HTML support
+v0.3.0         File change detection (rebuild only changed files)
+```
 
 ---
 
@@ -314,7 +356,8 @@ See [docs/proposals/ARCHITECTURE.md](docs/proposals/ARCHITECTURE.md) for design 
 - [Problem Statement](docs/problems/00-problem-statement.md)
 - [Architecture Decisions](docs/decisions/)
 - [Usage Patterns](docs/USAGE_PATTERNS.md)
-- [Roadmap](docs/plans/FINAL_PLAN.md)
+- [Benchmark Results](benchmarks/SCALE_REPORT.md)
+- [Launch Plan](docs/plans/LAUNCH_PLAN_v0.1.0.md)
 
 ---
 
