@@ -4,9 +4,17 @@
 
 # raglet
 
+[![CI](https://github.com/mkarots/raglet/actions/workflows/ci.yml/badge.svg)](https://github.com/mkarots/raglet/actions/workflows/ci.yml)
+[![Smoke Tests](https://github.com/mkarots/raglet/actions/workflows/smoke.yml/badge.svg)](https://github.com/mkarots/raglet/actions/workflows/smoke.yml)
+[![Benchmarks](https://github.com/mkarots/raglet/actions/workflows/benchmark.yml/badge.svg)](https://github.com/mkarots/raglet/actions/workflows/benchmark.yml)
+[![PyPI version](https://img.shields.io/pypi/v/raglet.svg)](https://pypi.org/project/raglet/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/raglet.svg)](https://pypi.org/project/raglet/)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Linting: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Make](https://img.shields.io/badge/Make-grey?logo=gnu&logoColor=white)](https://www.gnu.org/software/make/)
 
 **Portable memory for small text corpora. No servers, no API keys, no infrastructure.**
 
